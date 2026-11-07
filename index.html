@@ -406,7 +406,7 @@ function breakTime(n){let left=300;const t=el('p',{class:'big'},'5:00');const o=
   const iv=setInterval(()=>{left--;t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(left<=0){clearInterval(iv);o.remove();start(n)}},1000)}
 function start(gi){S.g=gi;hud();setTargets([]);const G=GAMES[gi];window.scrollTo({top:0,behavior:'smooth'});
   if(G.type==='algo')algoGame(gi,0);else if(G.type==='ladder')ladderGame(gi);else bugGame(gi)}
-function showMap(){S.g=-1;hud();setTargets([]);const next=[...Array(10).keys()].find(i=>!S.done.has(i));
+function showMap(){[0,1,2,3,4,5].forEach(i=>S.done.add(i));S.g=-1;hud();setTargets([]);const next=[...Array(10).keys()].find(i=>!S.done.has(i));
   $('#world').replaceChildren(el('div',{class:'top'},el('span',{class:'qtitle'},'QUEST MAP · 10 GAMES · EASY TO HARD'),el('span',{class:'story'},'Long division = 5 moves on repeat')),moves(null),
     el('div',{class:'map'},...GAMES.map((G,i)=>{const done=S.done.has(i),isNext=i===next;
       return el('button',{type:'button',class:'node'+(done?' done':isNext?' next':' locked'),onclick:()=>{if(done||isNext)start(i);else{sBad()}}},
