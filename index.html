@@ -198,12 +198,18 @@ const sWin=()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.15,'tria
 function confetti(){const c=el('div',{class:'confetti'});const cols=['#ffcc33','#4ade80','#4da3ff','#c084fc','#ff8a4c'];for(let i=0;i<90;i++)c.append(el('i',{style:`left:${rnd(0,100)}%;background:${cols[i%5]};animation-delay:${Math.random()*.8}s`}));document.body.append(c);setTimeout(()=>c.remove(),3300)}
 
 const BOSSES=[['🐉','EMBER DRAGON'],['👾','PIXEL INVADER'],['🧟','BLOCK ZOMBIE'],['🐙','KRAKEN'],['🦖','T-REX KING'],['🤖','ROBO GOLEM'],['👻','SHADOW GHOST'],['🕷️','CAVE SPIDER'],['🦂','SAND SCORPION'],['🐲','JADE WYRM'],['👹','OGRE CHIEF'],['🧙','DARK WIZARD']];
+const VISITORS=[['🤡','CREEPY CLOWN'],['🧛','VAMPIRE GUEST'],['👽','ALIEN DELIVERY'],['🧟','ZOMBIE NEIGHBOR'],['👻','GHOST MAID'],['🐺','WOLF IN A SUIT'],['🎃','PUMPKIN MAN'],['🕴️','SHADOW MAN']];
 const LOOT=['🗡️ Diamond Sword','🛡️ Iron Shield','🏹 Fire Bow','🪄 Magic Wand','🐺 Wolf Pet','🐉 Baby Dragon','👑 Gold Crown','🪓 Netherite Axe','🧪 Speed Potion','🦄 Unicorn Mount','💣 TNT Pack','🪽 Elytra Wings'];
-S.loot=S.loot||[];S.hearts=3;S.hit=null;S.crit=false;
+S.loot=S.loot||[];S.door=false;try{S.door=localStorage.getItem('dqdoor')==='1'}catch(e){}S.hearts=3;S.hit=null;S.crit=false;
 function hurt(){S.hearts--;const w=$('#world');w.classList.remove('wshake');void w.offsetWidth;w.classList.add('wshake');beep(90,.25,'sawtooth',.06);
-  const h=$('#hearts');if(h)h.textContent='❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(3-Math.max(0,S.hearts));
-  if(S.hearts<=0){S.hearts=3;setTimeout(()=>{const o=modal(el('h2',{},'THE BOSS HEALED!'),el('p',{class:'prompt'},'Out of hearts. Hearts refilled. Try that move again. Your stars are safe.'),el('button',{type:'button',class:'btn',onclick:()=>o.remove()},'BACK TO THE FIGHT'));},300)}}
+  const h=$('#hearts');if(h)h.textContent=S.door?('🍪'.repeat(Math.max(0,S.hearts))+'▫️'.repeat(3-Math.max(0,S.hearts))):('❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(3-Math.max(0,S.hearts)));if(S.door){const bb=$('#bbar');if(bb)bb.append(el('div',{class:'taunt'},'*creeeak* the door moved!'))}
+  if(S.hearts<=0){S.hearts=3;setTimeout(()=>{const o=modal(el('h2',{},S.door?'THE DOOR CREAKED OPEN!':'THE BOSS HEALED!'),el('p',{class:'prompt'},S.door?'Out of cookies. Slam it shut, cookies refilled.':'Out of hearts. Hearts refilled. Try that move again. Your stars are safe.'),el('button',{type:'button',class:'btn',onclick:()=>o.remove()},'BACK TO THE FIGHT'));},300)}}
 function bossPanel(boss,hp,max){const pct=Math.max(0,Math.round(100*hp/max));
+  if(S.door){const lock=100-pct;return el('div',{class:'bossbar',id:'bbar',style:'background:linear-gradient(90deg,#3b2414,#6b4423);border-color:#2a160a'},
+    el('div',{class:'bossface',id:'bface',style:'position:relative'},el('span',{style:'font-size:4.4rem'},'🚪'),el('span',{style:'position:absolute;right:-14px;top:-6px;font-size:2.4rem'},boss[0])),
+    el('div',{},el('div',{class:'bname',style:'color:#ffd9a8'},'KNOCK KNOCK… '+boss[1]+(S.crit?' · ':''),S.crit?el('span',{class:'crit'},'EXTRA BOLT!'):null),
+      el('div',{class:'hp',style:'background:#2a160a;border-color:#000'},el('i',{style:`width:${lock}%;background:linear-gradient(#ffe066,#e0a400)`})),el('div',{class:'hptxt',style:'color:#fff'},lock>=100?'🔒 FULLY LOCKED':`🔒 LOCK ${lock}%  · solve to lock the door!`)),
+    el('div',{class:'hearts',id:'hearts',title:'Cookies'},'🍪'.repeat(S.hearts)+'▫️'.repeat(3-S.hearts)))}
   const face=el('div',{class:'bossface',id:'bface'},boss[0]);
   return el('div',{class:'bossbar',id:'bbar'},face,el('div',{},el('div',{class:'bname'},boss[1]+(S.crit?'  ·  ':''),S.crit?el('span',{class:'crit'},'CRITICAL HIT!'):null),el('div',{class:'hp'},el('i',{style:`width:${pct}%`})),el('div',{class:'hptxt'},`HP ${hp} / ${max}`)),
     el('div',{class:'hearts',id:'hearts',title:'Your hearts'},'❤️'.repeat(S.hearts)+'🖤'.repeat(3-S.hearts)))}
@@ -292,7 +298,7 @@ function numberAsk(prompt,ans,hint,ok,showMe){let tries=0;
 function algoGame(gi,pi){
   const G=GAMES[gi];if(pi>=G.probs.length)return gameWon(gi);
   const [N,d,mode]=G.probs[pi];const P=solve(N,d);
-  const rev={q:[],p:[],s:[],b:[]};let si=0,phase='D',fresh=null,peek=false,miss=0;const boss=BOSSES[rnd(0,BOSSES.length-1)];S.hearts=3;const maxHP=P.steps[0].cur;
+  const rev={q:[],p:[],s:[],b:[]};let si=0,phase='D',fresh=null,peek=false,miss=0;const boss=S.door?VISITORS[rnd(0,VISITORS.length-1)]:BOSSES[rnd(0,BOSSES.length-1)];S.hearts=3;const maxHP=P.steps[0].cur;
   const world=$('#world');
   const draw=()=>{
     const st=P.steps[si];const tgt={phase,i:si};const auto=mode==='watch'||(mode==='faded'&&phase==='D');
@@ -339,6 +345,7 @@ function algoGame(gi,pi){
     world.replaceChildren(
       el('div',{class:'top'},el('span',{class:'qtitle'},`GAME ${gi+1} · ${G.title.toUpperCase()} · PROBLEM ${pi+1} OF ${G.probs.length}${mode==='guided'?' · GUIDED':''}`),el('span',{class:'big'},`${N.toLocaleString()} ÷ ${d}`)),
       bossPanel(boss,hpNow(),Math.max(maxHP,hpNow())),moves(phase==='R'?null:phase==='A'?'S':phase),el('div',{class:'play'},B.node,Lad.node),box);
+    if(S.door&&phase==='D'){[0,180,360].forEach(t=>setTimeout(()=>beep(140,.07,'square',.08),t));const f=$('#bface');if(f){f.classList.add('hit')}}
     if(S.hit!=null){const h=S.hit;S.hit=null;requestAnimationFrame(()=>showHit(h))}
   };
   const hpNow=()=>{const st=P.steps[si];if(phase==='D'||phase==='M'||phase==='S'||phase==='A')return st.cur;return st.r};
@@ -350,7 +357,7 @@ function algoGame(gi,pi){
     const B=buildBoard(P,ALL(P),null,null);
     world.replaceChildren(el('div',{class:'top'},el('span',{class:'qtitle'},`GAME ${gi+1} · PROBLEM ${pi+1} SOLVED`),el('span',{class:'big'},`${N.toLocaleString()} ÷ ${d} = ${P.quot}${P.rem?' R'+P.rem:''}`)),
       el('div',{class:'play'},B.node,ladderNode(d,null).node),
-      el('div',{class:'bossbar'},el('div',{class:'bossface',style:'animation:none;transform:rotate(90deg);filter:grayscale(1)'},boss[0]),el('div',{},el('div',{class:'bname'},boss[1]+' · K.O.!'),el('div',{class:'prompt'},P.rem?`Escaped with ${P.rem} HP (the remainder)`:'PERFECT KNOCKOUT')),el('div',{class:'loot',title:'Loot drop'},item.split(' ')[0])),
+      el('div',{class:'bossbar'},el('div',{class:'bossface',style:'animation:none;transform:rotate(90deg);filter:grayscale(1)'},boss[0]),el('div',{},el('div',{class:'bname'},S.door?boss[1]+' RAN AWAY!':boss[1]+' · K.O.!'),el('div',{class:'prompt'},S.door?(P.rem?`Door locked! ${P.rem} left over (the remainder)`:'🔒 DOOR STAYS LOCKED!'):(P.rem?`Escaped with ${P.rem} HP (the remainder)`:'PERFECT KNOCKOUT'))),el('div',{class:'loot',title:'Loot drop'},item.split(' ')[0])),
       el('p',{class:'prompt'},`LOOT DROP: ${item}!`),
       el('p',{class:'story'},`Check: ${P.quot} × ${d}${P.rem?' + '+P.rem:''} = ${N.toLocaleString()} ✔`),
       el('div',{class:'row'},el('button',{type:'button',class:'btn big2',onclick:()=>flip(()=>algoGame(gi,pi+1))},'COLLECT ⭐')))};
@@ -410,6 +417,7 @@ function showMap(){S.g=-1;hud();setTargets([]);const next=[...Array(10).keys()].
     el('div',{class:'map'},...GAMES.map((G,i)=>{const done=S.done.has(i),isNext=i===next;
       return el('button',{type:'button',class:'node'+(done?' done':isNext?' next':' locked'),onclick:()=>{if(done||isNext)start(i);else{sBad()}}},
         el('span',{class:'n'},done?`✓ GAME ${i+1}`:`GAME ${i+1}`),el('span',{class:'t'},done||isNext?G.title:'???'),el('span',{class:'story'},done||isNext?G.skill:'Mystery'))})),
+    el('button',{type:'button',class:'btn big2',style:S.door?'background:linear-gradient(#ffb05e,#e07a1f)':'background:linear-gradient(#c9a27a,#8b5e34);color:#fff',onclick:()=>{S.door=!S.door;try{localStorage.setItem('dqdoor',S.door?'1':'0')}catch(e){}sWin();showMap()}},S.door?'🚪 KEEP THE DOOR LOCKED: ON':'🚪 KEEP THE DOOR LOCKED: OFF (tap to turn on)'),
     el('div',{class:'row'},el('button',{type:'button',class:'btn big2',onclick:()=>start(next??0)},next==null?'REPLAY':'PLAY NEXT ▶'),el('button',{type:'button',class:'btn alt',onclick:()=>{S.done.clear();S.stars=0;S.gems=0;S.xp=0;hud();showMap()}},'RESET'),
       null));
   document.querySelectorAll('.node.locked').forEach((b,j)=>b.addEventListener('click',e=>{if(e.shiftKey){const i=[...b.parentNode.children].indexOf(b);start(i)}}));
@@ -420,11 +428,11 @@ window.addEventListener('pointermove',e=>{px=e.clientX;py=e.clientY;lastAct=perf
 window.addEventListener('keydown',()=>{lastAct=performance.now();if(nudged)unNudge()});
 function floatXP(t){const f=el('div',{class:'floatxp'},t);f.style.left=px+'px';f.style.top=(py-20)+'px';document.body.append(f);setTimeout(()=>f.remove(),1000)}
 function comboPop(n){const c=el('div',{class:'combo'},`COMBO x${n}!`);document.body.append(c);beep(990,.08,'triangle',.05);setTimeout(()=>c.remove(),1000)}
-const TAUNTS=['Your move!','Bet you can\'t!','Too scared? 😜','Hurry, hero!','I\'m waiting…','Come on!'];
+const TAUNTS_D=['Let me iiin!','Knock knock…','Open uuup!','I can hear you…','Is anyone home?'];const TAUNTS=['Your move!','Bet you can\'t!','Too scared? 😜','Hurry, hero!','I\'m waiting…','Come on!'];
 function unNudge(){nudged=false;document.querySelectorAll('.nudge').forEach(x=>x.classList.remove('nudge'));document.querySelectorAll('.taunt').forEach(x=>x.remove())}
 setInterval(()=>{if(nudged||document.querySelector('.overlay'))return;if(performance.now()-lastAct>9000){nudged=true;
   document.querySelectorAll('.c.slot,.c.src,.sword,.rung.guide,input[type=number],.btn.big2').forEach(x=>x.classList.add('nudge'));
-  const bb=document.getElementById('bbar');if(bb)bb.append(el('div',{class:'taunt'},TAUNTS[rnd(0,TAUNTS.length-1)]));beep(700,.06,'sine',.04);setTimeout(()=>beep(900,.06,'sine',.04),90)}},1000);
+  const bb=document.getElementById('bbar');if(bb)bb.append(el('div',{class:'taunt'},(S.door?TAUNTS_D:TAUNTS)[rnd(0,4)]));beep(700,.06,'sine',.04);setTimeout(()=>beep(900,.06,'sine',.04),90)}},1000);
 let lastHover=null;document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('button,.rung.drag,.c.src,.sword,.node');if(t&&t!==lastHover){lastHover=t;beep(1400,.02,'sine',.015)}});
 document.addEventListener('input',e=>{if(e.target.matches('input[type=number]')){e.target.classList.remove('tap');void e.target.offsetWidth;e.target.classList.add('tap');beep(800+rnd(0,300),.025,'sine',.02)}});
 document.addEventListener('keydown',e=>{if((e.key==='b'||e.key==='B')&&!e.target.matches('input')){let left=300;const t=el('p',{class:'big'},'5:00');const o=modal(el('h2',{},'BREAK TIME'),el('p',{class:'story'},'Stand up, stretch, drink water.'),t,el('button',{type:'button',class:'btn',onclick:()=>{clearInterval(iv);o.remove()}},'BACK TO THE GAME'));
