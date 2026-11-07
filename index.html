@@ -101,6 +101,20 @@ input[type=number]:focus{outline:none;border-color:var(--gold)}
 details{background:var(--panel);border:3px solid var(--edge);border-radius:8px;padding:10px 14px}
 summary{cursor:pointer;font-family:var(--pixel);font-size:.6rem;color:var(--muted)}
 .tutor{font-size:.92rem;color:var(--muted)}
+.bossbar{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:linear-gradient(90deg,#2a1020,#141c25);border:3px solid #5a2440;border-radius:10px;padding:10px 16px;position:relative;overflow:visible}
+.bossface{font-size:4rem;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));animation:idle 1.6s ease-in-out infinite}
+@keyframes idle{50%{transform:translateY(-6px) rotate(3deg)}}
+.bossface.hit{animation:hit .45s}@keyframes hit{20%{transform:translateX(14px) rotate(12deg) scale(.85);filter:brightness(3)}60%{transform:translateX(-8px)}}
+.bname{font-family:var(--pixel);font-size:.6rem;color:#ff9ac8;line-height:1.7}
+.hp{height:20px;background:#3a0f1c;border:3px solid #12060a;border-radius:4px;overflow:hidden;margin-top:6px}
+.hp i{display:block;height:100%;background:linear-gradient(#ff5c7a,#c2183c);transition:width .5s}
+.hptxt{font-family:var(--mono);font-weight:700;font-size:1.2rem}
+.hearts{font-size:1.6rem;letter-spacing:2px}
+.dmg{position:absolute;left:40px;top:0;font-family:var(--pixel);font-size:1.4rem;color:#ffe14d;text-shadow:3px 3px 0 #7a1010;animation:dmg 1s ease-out forwards;pointer-events:none;z-index:5}
+@keyframes dmg{0%{transform:translateY(0) scale(.5);opacity:0}20%{transform:translateY(-10px) scale(1.4);opacity:1}100%{transform:translateY(-70px) scale(1);opacity:0}}
+.wshake{animation:wsh .4s}@keyframes wsh{20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+.crit{font-family:var(--pixel);color:#4de3e8;font-size:.7rem}
+.loot{font-size:3.4rem;animation:pop .6s ease-out}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:520px){:root{--cell:1.8rem}.board{font-size:1.35rem}.big{font-size:1.4rem}.prompt{font-size:1.1rem}}
 </style>
@@ -114,6 +128,7 @@ summary{cursor:pointer;font-family:var(--pixel);font-size:.6rem;color:var(--mute
       <span class="chip">⭐ <b id="stars">0</b></span>
       <span class="chip">💎 <b id="gems">0</b></span>
       <span class="chip">🔥 <b id="streak">0</b></span>
+      <span class="chip" id="bag" title="Loot">🎒 <b id="loot">0</b></span>
     </div>
   </div>
   <div class="xpbar" aria-label="Experience"><i id="xp"></i></div>
@@ -149,7 +164,7 @@ const GAMES=[
 const S={g:-1,stars:0,gems:0,streak:0,xp:0,done:new Set(),audio:null};
 try{const sv=JSON.parse(localStorage.getItem('dq')||'null');if(sv){S.stars=sv.stars||0;S.gems=sv.gems||0;S.xp=sv.xp||0;S.done=new Set(sv.done||[])}}catch(e){}
 function save(){try{localStorage.setItem('dq',JSON.stringify({stars:S.stars,gems:S.gems,xp:S.xp,done:[...S.done]}))}catch(e){}}
-function hud(){$('#lvl').textContent=S.g<0?'-':S.g+1;$('#stars').textContent=S.stars;$('#gems').textContent=S.gems;$('#streak').textContent=S.streak;$('#xp').style.width=Math.min(100,S.xp%101)+'%';save()}
+function hud(){const lt=document.getElementById('loot');if(lt&&S.loot)lt.textContent=S.loot.length;$('#lvl').textContent=S.g<0?'-':S.g+1;$('#stars').textContent=S.stars;$('#gems').textContent=S.gems;$('#streak').textContent=S.streak;$('#xp').style.width=Math.min(100,S.xp%101)+'%';save()}
 
 /* sound */
 function beep(f=440,t=.08,type='square',v=.05){try{S.audio=S.audio||new (window.AudioContext||window.webkitAudioContext)();const a=S.audio,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t);o.stop(a.currentTime+t)}catch(e){}}
@@ -159,6 +174,19 @@ const sPick=()=>beep(520,.05,'triangle',.05);
 const sDrop=()=>{beep(300,.06);setTimeout(()=>beep(200,.08),70)};
 const sWin=()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.15,'triangle',.06),i*110));
 function confetti(){const c=el('div',{class:'confetti'});const cols=['#ffcc33','#4ade80','#4da3ff','#c084fc','#ff8a4c'];for(let i=0;i<90;i++)c.append(el('i',{style:`left:${rnd(0,100)}%;background:${cols[i%5]};animation-delay:${Math.random()*.8}s`}));document.body.append(c);setTimeout(()=>c.remove(),3300)}
+
+const BOSSES=[['🐉','EMBER DRAGON'],['👾','PIXEL INVADER'],['🧟','BLOCK ZOMBIE'],['🐙','KRAKEN'],['🦖','T-REX KING'],['🤖','ROBO GOLEM'],['👻','SHADOW GHOST'],['🕷️','CAVE SPIDER'],['🦂','SAND SCORPION'],['🐲','JADE WYRM'],['👹','OGRE CHIEF'],['🧙','DARK WIZARD']];
+const LOOT=['🗡️ Diamond Sword','🛡️ Iron Shield','🏹 Fire Bow','🪄 Magic Wand','🐺 Wolf Pet','🐉 Baby Dragon','👑 Gold Crown','🪓 Netherite Axe','🧪 Speed Potion','🦄 Unicorn Mount','💣 TNT Pack','🪽 Elytra Wings'];
+S.loot=S.loot||[];S.hearts=3;S.hit=null;S.crit=false;
+function hurt(){S.hearts--;const w=$('#world');w.classList.remove('wshake');void w.offsetWidth;w.classList.add('wshake');beep(90,.25,'sawtooth',.06);
+  const h=$('#hearts');if(h)h.textContent='❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(3-Math.max(0,S.hearts));
+  if(S.hearts<=0){S.hearts=3;setTimeout(()=>{const o=modal(el('h2',{},'THE BOSS HEALED!'),el('p',{class:'prompt'},'Out of hearts. Hearts refilled. Try that move again. Your stars are safe.'),el('button',{type:'button',class:'btn',onclick:()=>o.remove()},'BACK TO THE FIGHT'));},300)}}
+function bossPanel(boss,hp,max){const pct=Math.max(0,Math.round(100*hp/max));
+  const face=el('div',{class:'bossface',id:'bface'},boss[0]);
+  return el('div',{class:'bossbar',id:'bbar'},face,el('div',{},el('div',{class:'bname'},boss[1]+(S.crit?'  ·  ':''),S.crit?el('span',{class:'crit'},'CRITICAL HIT!'):null),el('div',{class:'hp'},el('i',{style:`width:${pct}%`})),el('div',{class:'hptxt'},`HP ${hp} / ${max}`)),
+    el('div',{class:'hearts',id:'hearts',title:'Your hearts'},'❤️'.repeat(S.hearts)+'🖤'.repeat(3-S.hearts)))}
+function showHit(dmg){const b=$('#bbar'),f=$('#bface');if(!b)return;f.classList.add('hit');b.append(el('div',{class:'dmg'},'-'+dmg+(S.crit?'!!':'')));
+  const w=$('#world');w.classList.remove('wshake');void w.offsetWidth;w.classList.add('wshake');beep(150,.12,'square',.07);setTimeout(()=>beep(90,.15,'square',.06),90)}
 function shake(x){x.classList.remove('shake');void x.offsetWidth;x.classList.add('shake')}
 
 /* ---------- drag & drop (mouse, touch, and tap-tap) ---------- */
@@ -233,14 +261,14 @@ function numberAsk(prompt,ans,hint,ok,showMe){let tries=0;
   const inp=el('input',{type:'number',inputmode:'numeric',id:'ans','aria-label':'Your answer'});const fb=el('p',{class:'fb',role:'status'});const hb=el('p',{class:'hint',hidden:''});
   const box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),el('div',{class:'row'},inp,el('button',{type:'button',class:'btn',onclick:()=>check()},'GO')),fb,hb);
   const check=()=>{if(inp.value==='')return;if(Number(inp.value)===ans){sGood();S.streak++;S.xp+=1;hud();fb.className='fb good';fb.textContent='Yes!';setTimeout(ok,280);return}
-    tries++;sBad();S.streak=0;hud();shake(box);fb.className='fb bad';hb.hidden=false;hb.textContent=hint;fb.textContent=tries>=2?`It's ${ans}. Type ${ans} to keep going.`:'Not quite. Use the clue.';inp.select()};
+    tries++;sBad();S.streak=0;hud();shake(box);if(document.getElementById('bbar'))hurt();fb.className='fb bad';hb.hidden=false;hb.textContent=hint;fb.textContent=tries>=2?`It's ${ans}. Type ${ans} to keep going.`:'Not quite. Use the clue.';inp.select()};
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')check()});setTimeout(()=>inp.focus({preventScroll:true}),40);return box}
 
 /* ---------- algorithm game ---------- */
 function algoGame(gi,pi){
   const G=GAMES[gi];if(pi>=G.probs.length)return gameWon(gi);
   const [N,d,mode]=G.probs[pi];const P=solve(N,d);
-  const rev={q:[],p:[],s:[],b:[]};let si=0,phase='D',fresh=null,peek=false,miss=0;
+  const rev={q:[],p:[],s:[],b:[]};let si=0,phase='D',fresh=null,peek=false,miss=0;const boss=BOSSES[rnd(0,BOSSES.length-1)];S.hearts=3;const maxHP=P.steps[0].cur;
   const world=$('#world');
   const draw=()=>{
     const st=P.steps[si];const tgt={phase,i:si};const auto=mode==='watch'||(mode==='faded'&&phase==='D');
@@ -249,7 +277,7 @@ function algoGame(gi,pi){
     const Lad=ladderNode(d,phase==='D'?st.cur:null,{hidden:mode==='boss'&&!peek,onPeek:()=>{peek=true;draw()},draggableFor:dragMode});
     let prompt,box,say;
     const fb=el('p',{class:'fb',role:'status'});const hb=el('p',{class:'hint',hidden:''});
-    const wrong=(msg,h)=>{miss++;S.streak=0;hud();fb.className='fb bad';fb.textContent=msg;if(h){hb.hidden=false;hb.textContent=h}if(miss>=3)showBtn.hidden=false;return false};
+    const wrong=(msg,h)=>{miss++;hurt();S.streak=0;hud();fb.className='fb bad';fb.textContent=msg;if(h){hb.hidden=false;hb.textContent=h}if(miss>=3)showBtn.hidden=false;return false};
     const showBtn=el('button',{type:'button',class:'btn alt',hidden:''},'SHOW ME');
     if(phase==='D'){
       const pre=si===0&&P.start>0?`${String(P.N).slice(0,P.start)} is smaller than ${d}, so use ${st.cur}. `:'';
@@ -266,7 +294,7 @@ function algoGame(gi,pi){
     if(auto&&['D','M','B'].includes(phase)){
       box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),el('p',{class:'story',style:'color:var(--ink);font-size:1.15rem'},say),
         el('div',{class:'row'},el('button',{type:'button',class:'btn big2',id:'nx',onclick:()=>{$('#nx').disabled=true;autoMove(B,Lad)}},'SHOW ▶')));
-    }else if(phase==='S'){box=numberAsk(`<b style="color:var(--mS)">Subtract.</b> ${st.cur} − ${st.p} = ?`,st.r,`Take ${st.p} away from ${st.cur}.`,()=>{rev.s[si]=1;fresh='s'+si;phase='C';draw()});}
+    }else if(phase==='S'){box=numberAsk(`<b style="color:var(--mS)">Subtract.</b> ${st.cur} − ${st.p} = ?`,st.r,`Take ${st.p} away from ${st.cur}.`,()=>{rev.s[si]=1;fresh='s'+si;phase='C';S.crit=Math.random()<.25;if(S.crit){S.gems++;hud()}S.hit=st.p;draw()});}
     else if(phase==='C'){const yes=el('button',{type:'button',class:'btn big2'},`YES, ${st.r} < ${d}`),no=el('button',{type:'button',class:'btn alt big2'},`NO`);
       const go=()=>{fresh=null;if(st.next!==null)phase='B';else if(st.r>0)phase='R';else return done();draw()};
       yes.onclick=()=>{sGood();S.xp+=1;hud();go()};no.onclick=()=>{sBad();fb.className='fb bad';fb.textContent=`Look again: ${st.r} is smaller than ${d}. So we are good.`};
@@ -277,17 +305,21 @@ function algoGame(gi,pi){
     showBtn.onclick=()=>{showBtn.disabled=true;autoMove(B,Lad)};
     world.replaceChildren(
       el('div',{class:'top'},el('span',{class:'qtitle'},`GAME ${gi+1} · ${G.title.toUpperCase()} · PROBLEM ${pi+1} OF ${G.probs.length}${mode==='watch'?' · WATCH':mode==='faded'?' · DIVIDE IS SHOWN':''}`),el('span',{class:'big'},`${N.toLocaleString()} ÷ ${d}`)),
-      moves(phase==='R'?null:phase),el('div',{class:'play'},B.node,Lad.node),box);
+      bossPanel(boss,hpNow(),Math.max(maxHP,hpNow())),moves(phase==='R'?null:phase),el('div',{class:'play'},B.node,Lad.node),box);
+    if(S.hit!=null){const h=S.hit;S.hit=null;requestAnimationFrame(()=>showHit(h))}
   };
+  const hpNow=()=>{const st=P.steps[si];if(phase==='D'||phase==='M'||phase==='S')return st.cur;return st.r};
   const autoMove=(B,Lad)=>{const st=P.steps[si];
     if(phase==='D'){const from=Lad.rung(st.q)||B.cell('top-'+st.col);fly(from,B.cell('q-'+st.col),String(st.q),()=>{sGood();rev.q[si]=1;fresh='q'+si;phase='M';miss=0;draw()})}
     else if(phase==='M'){const from=Lad.rung(st.q)||B.cell('top-'+st.col);fly(from,B.cell(`p${si}-${st.col}`),String(st.p),()=>{sDrop();rev.p[si]=1;fresh='p'+si;phase='S';miss=0;draw()})}
     else if(phase==='B'){fly(B.cell('top-'+st.nextCol),B.cell(`w${si}-${st.nextCol}`),String(st.digit),()=>{sDrop();rev.b[si]=1;fresh='b'+si;si++;phase='D';miss=0;draw()})}};
-  const done=()=>{setTargets([]);sWin();confetti();S.xp+=8;hud();
+  const done=()=>{setTargets([]);sWin();confetti();S.xp+=8;const item=LOOT[rnd(0,LOOT.length-1)];S.loot.push(item);S.crit=false;hud();
     const B=buildBoard(P,ALL(P),null,null);
     world.replaceChildren(el('div',{class:'top'},el('span',{class:'qtitle'},`GAME ${gi+1} · PROBLEM ${pi+1} SOLVED`),el('span',{class:'big'},`${N.toLocaleString()} ÷ ${d} = ${P.quot}${P.rem?' R'+P.rem:''}`)),
       el('div',{class:'play'},B.node,ladderNode(d,null).node),
-      el('p',{class:'prompt'},`Check: ${P.quot} × ${d}${P.rem?' + '+P.rem:''} = ${N.toLocaleString()} ✔`),
+      el('div',{class:'bossbar'},el('div',{class:'bossface',style:'animation:none;transform:rotate(90deg);filter:grayscale(1)'},boss[0]),el('div',{},el('div',{class:'bname'},boss[1]+' · K.O.!'),el('div',{class:'prompt'},P.rem?`Escaped with ${P.rem} HP (the remainder)`:'PERFECT KNOCKOUT')),el('div',{class:'loot',title:'Loot drop'},item.split(' ')[0])),
+      el('p',{class:'prompt'},`LOOT DROP: ${item}!`),
+      el('p',{class:'story'},`Check: ${P.quot} × ${d}${P.rem?' + '+P.rem:''} = ${N.toLocaleString()} ✔`),
       el('div',{class:'row'},el('button',{type:'button',class:'btn big2',onclick:()=>flip(()=>algoGame(gi,pi+1))},'COLLECT ⭐')))};
   draw();
 }
