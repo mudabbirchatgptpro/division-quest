@@ -55,5 +55,14 @@
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Backspace"].indexOf(e.key) >= 0) e.preventDefault();
   }, { passive: false });
 </script>
+<button id="mute" type="button" style="position:fixed;top:10px;right:10px;z-index:99;font:700 16px system-ui;padding:8px 14px;border-radius:10px;border:3px solid #333;background:#fff;cursor:pointer">🔇 Sound OFF</button>
+<script>
+(function(){var muted=true,b=document.getElementById('mute');
+function ctx(){return (window.WEBAudio&&WEBAudio.audioContext)||null}
+function apply(){var c=ctx();if(!c)return;if(muted&&c.state==='running')c.suspend();if(!muted&&c.state==='suspended')c.resume()}
+setInterval(apply,300);
+b.onclick=function(){muted=!muted;b.textContent=muted?'🔇 Sound OFF':'🔊 Sound ON';apply();var cv=document.querySelector('canvas');if(cv)cv.focus()};
+})();
+</script>
 </body>
 </html>
