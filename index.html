@@ -130,6 +130,12 @@ button:hover,.node:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 8px
 .combo{position:fixed;left:50%;top:22%;transform:translateX(-50%);pointer-events:none;z-index:75;font-family:var(--pixel);font-size:1.6rem;color:#ff7a00;text-shadow:3px 3px 0 #fff,6px 6px 0 rgba(0,0,0,.15);animation:combo 1s ease-out forwards}
 @keyframes combo{0%{transform:translateX(-50%) scale(.3);opacity:0}30%{transform:translateX(-50%) scale(1.3);opacity:1}100%{transform:translateX(-50%) scale(1) translateY(-40px);opacity:0}}
 input.tap{animation:pop .2s}
+.arena{position:relative;height:230px;border-radius:10px;overflow:hidden;border:3px solid #7cc4ff;background:linear-gradient(#bfeaff 0,#e9f8ff 60%,#8fdc6a 60%,#6cc84a 100%);touch-action:none;cursor:none}
+.hero{position:absolute;font-size:2.6rem;transform:translate(-50%,-50%);transition:none;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25));z-index:3}
+.gem{position:absolute;transform:translate(-50%,-50%);width:58px;height:58px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:1.6rem;color:#fff;
+  background:linear-gradient(135deg,#5aa9ff,#1f6fe0);border:3px solid #0c3a80;border-radius:10px;box-shadow:0 5px 0 #0c3a80;text-shadow:2px 2px 0 #0c3a80}
+.gem.boom{animation:boom .4s forwards}@keyframes boom{to{transform:translate(-50%,-50%) scale(2);opacity:0}}
+.arenatip{position:absolute;left:10px;top:8px;font-family:var(--pixel);font-size:.55rem;color:#0c3a80;z-index:4}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:520px){:root{--cell:1.8rem}.board{font-size:1.35rem}.big{font-size:1.4rem}.prompt{font-size:1.1rem}}
 </style>
@@ -311,7 +317,8 @@ function algoGame(gi,pi){
     if(auto&&['D','M','B'].includes(phase)){
       box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),el('p',{class:'story',style:'color:var(--ink);font-size:1.15rem'},say),
         el('div',{class:'row'},el('button',{type:'button',class:'btn big2',id:'nx',onclick:()=>{$('#nx').disabled=true;autoMove(B,Lad)}},'SHOW ▶')));
-    }else if(phase==='S'){box=numberAsk(`<b style="color:var(--mS)">Subtract.</b> ${st.cur} − ${st.p} = ?`,st.r,`Take ${st.p} away from ${st.cur}.`,()=>{rev.s[si]=1;fresh='s'+si;phase='A';draw()});}
+    }else if(phase==='D'){box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),arena(st.q,d,st.cur,(k,ge)=>attempt(targets[0],k,ge)),el('p',{class:'story'},'Or drag the ladder rung up to the top box.'),el('div',{class:'row'},showBtn),fb,hb);}
+    else if(phase==='S'){box=numberAsk(`<b style="color:var(--mS)">Subtract.</b> ${st.cur} − ${st.p} = ?`,st.r,`Take ${st.p} away from ${st.cur}.`,()=>{rev.s[si]=1;fresh='s'+si;phase='A';draw()});}
     else if(phase==='A'){const sw=el('span',{class:'sword',title:'Drag me onto the boss'},'⚔️');draggable(sw,'sword','⚔️');
       box=el('div',{class:'ask'},el('p',{class:'prompt',html:`ATTACK! Grab the sword and swing it at the boss for <b style="color:var(--mS)">${st.p}</b> damage!`}),el('div',{class:'row'},sw,el('span',{class:'story'},'Drag it onto the boss.')),fb);
       setTimeout(()=>{const bb=$('#bbar');if(bb)setTargets([{els:[bb],drop:x=>{if(x!=='sword')return false;S.crit=Math.random()<.25;if(S.crit){S.gems++;hud()}S.hit=st.p;phase='C';S.xp+=1;hud();draw();return true}}])},0);}
@@ -416,6 +423,30 @@ let lastHover=null;document.addEventListener('mouseover',e=>{const t=e.target.cl
 document.addEventListener('input',e=>{if(e.target.matches('input[type=number]')){e.target.classList.remove('tap');void e.target.offsetWidth;e.target.classList.add('tap');beep(800+rnd(0,300),.025,'sine',.02)}});
 document.addEventListener('keydown',e=>{if((e.key==='b'||e.key==='B')&&!e.target.matches('input')){let left=300;const t=el('p',{class:'big'},'5:00');const o=modal(el('h2',{},'BREAK TIME'),el('p',{class:'story'},'Stand up, stretch, drink water.'),t,el('button',{type:'button',class:'btn',onclick:()=>{clearInterval(iv);o.remove()}},'BACK TO THE GAME'));
   const iv=setInterval(()=>{left--;t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(left<=0){clearInterval(iv);o.remove()}},1000)}});
+
+let arenaLoop=null;
+function arena(q,d,cur,onPick){
+  if(arenaLoop){cancelAnimationFrame(arenaLoop);arenaLoop=null}
+  const A=el('div',{class:'arena',tabindex:'0','aria-label':'Steer the hero to the right number'});
+  const tip=el('div',{class:'arenatip'},`ARROW KEYS OR MOUSE: CATCH HOW MANY ${d}s FIT IN ${cur}`);
+  const hero=el('div',{class:'hero'},['🧑‍🚀','🦸','🥷','🧙'][rnd(0,3)]);A.append(tip,hero);
+  const opts=[...new Set([q,Math.max(0,q-1),Math.min(9,q+1),rnd(0,9),rnd(0,9)])].slice(0,4);
+  let hx=60,hy=150,tx=null,ty=null;const keys={};const gems=[];let alive=true;
+  setTimeout(()=>{const W=A.clientWidth||600;opts.forEach((k,i)=>{const g=el('div',{class:'gem'},String(k));const o={k,el:g,x:120+i*((W-160)/Math.max(1,opts.length-1)),y:rnd(60,190),vx:(Math.random()-.5)*1.6,vy:(Math.random()-.5)*1.2};gems.push(o);A.append(g)})},0);
+  A.addEventListener('pointermove',e=>{const r=A.getBoundingClientRect();tx=e.clientX-r.left;ty=e.clientY-r.top});
+  const kd=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)&&!e.target.matches('input')){keys[e.key]=1;tx=null;e.preventDefault()}};
+  const ku=e=>{keys[e.key]=0};window.addEventListener('keydown',kd);window.addEventListener('keyup',ku);
+  const step=()=>{if(!alive||!A.isConnected){window.removeEventListener('keydown',kd);window.removeEventListener('keyup',ku);return}
+    const W=A.clientWidth,H=A.clientHeight,sp=5;
+    if(keys.ArrowLeft||keys.a)hx-=sp;if(keys.ArrowRight||keys.d)hx+=sp;if(keys.ArrowUp||keys.w)hy-=sp;if(keys.ArrowDown||keys.s)hy+=sp;
+    if(tx!=null){hx+=(tx-hx)*.12;hy+=(ty-hy)*.12}
+    hx=Math.max(20,Math.min(W-20,hx));hy=Math.max(28,Math.min(H-20,hy));hero.style.left=hx+'px';hero.style.top=hy+'px';
+    for(const g of gems){if(g.dead)continue;g.x+=g.vx;g.y+=g.vy;if(g.x<40||g.x>W-40)g.vx*=-1;if(g.y<45||g.y>H-35)g.vy*=-1;g.el.style.left=g.x+'px';g.el.style.top=g.y+'px';
+      if(Math.hypot(g.x-hx,g.y-hy)<42){g.dead=true;g.el.classList.add('boom');
+        if(g.k===q){alive=false;onPick(g.k,g.el);return}else{onPick(g.k,g.el)}}}
+    arenaLoop=requestAnimationFrame(step)};
+  arenaLoop=requestAnimationFrame(step);setTimeout(()=>A.focus({preventScroll:true}),50);return A;
+}
 let lastSp=0;window.addEventListener('pointermove',e=>{const t=performance.now();if(t-lastSp<45)return;lastSp=t;const sp=el('span',{class:'spark'},['✨','⭐','💎','🟩'][rnd(0,3)]);sp.style.left=e.clientX+'px';sp.style.top=e.clientY+'px';document.body.append(sp);setTimeout(()=>sp.remove(),600)});
 $('#home').onclick=showMap;
 hud();showMap();
