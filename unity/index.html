@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keep the Door Locked 3D</title>
+<link rel="shortcut icon" href="TemplateData/favicon.ico">
+<style>
+  html,body{margin:0;height:100%;background:#8fd3ff;overflow:hidden;font-family:system-ui,sans-serif}
+  #unity-canvas{width:100vw;height:100vh;display:block;background:#8fd3ff;outline:none}
+  #load{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(#a8e3ff,#e6f7ff 60%,#9be27a 60%,#6fd04a)}
+  #load h1{margin:0;font-size:clamp(28px,5vw,56px);color:#ffd23f;text-shadow:3px 3px 0 #102030;letter-spacing:1px;text-align:center}
+  #load p{margin:0;font-size:20px;color:#102030;font-weight:700}
+  #bar{width:min(480px,80vw);height:26px;border:4px solid #102030;border-radius:8px;background:#fff;overflow:hidden}
+  #fill{height:100%;width:0;background:repeating-linear-gradient(90deg,#ffd23f 0 18px,#ffb000 18px 24px);transition:width .2s}
+  #err{color:#b00020;font-weight:700;max-width:80vw;text-align:center}
+</style>
+</head>
+<body>
+<canvas id="unity-canvas" tabindex="1"></canvas>
+<div id="load">
+  <h1>KEEP THE DOOR LOCKED</h1>
+  <p id="msg">Loading the hallway...</p>
+  <div id="bar"><div id="fill"></div></div>
+  <p id="err"></p>
+</div>
+<script>
+  var canvas = document.getElementById("unity-canvas");
+  var buildUrl = "Build";
+  var config = {
+    arguments: [],
+    dataUrl: buildUrl + "/door-webgl.data.unityweb",
+    frameworkUrl: buildUrl + "/door-webgl.framework.js.unityweb",
+    codeUrl: buildUrl + "/door-webgl.wasm.unityweb",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "Division Quest",
+    productName: "Keep the Door Locked",
+    productVersion: "1.0",
+    showBanner: function (msg, type) { if (type === "error") document.getElementById("err").textContent = msg; }
+  };
+  var s = document.createElement("script");
+  s.src = buildUrl + "/door-webgl.loader.js";
+  s.onload = function () {
+    createUnityInstance(canvas, config, function (p) {
+      document.getElementById("fill").style.width = Math.round(100 * p) + "%";
+    }).then(function () {
+      document.getElementById("load").style.display = "none";
+      canvas.focus();
+    }).catch(function (e) { document.getElementById("err").textContent = e; });
+  };
+  document.body.appendChild(s);
+  // keep keyboard input on the game
+  document.addEventListener("pointerdown", function () { canvas.focus(); });
+  window.addEventListener("keydown", function (e) {
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Backspace"].indexOf(e.key) >= 0) e.preventDefault();
+  }, { passive: false });
+</script>
+</body>
+</html>
