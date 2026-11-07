@@ -326,7 +326,7 @@ function algoGame(gi,pi){
     }else if(phase==='D'){box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),arena(st.q,d,st.cur,(k,ge)=>attempt(targets[0],k,ge)),typeRow('Or type it:',typed),el('p',{class:'story'},'Or drag the ladder rung up to the top box.'),el('div',{class:'row'},showBtn),fb,hb);}
     else if(phase==='S'){box=numberAsk(`<b style="color:var(--mS)">Subtract.</b> ${st.cur} − ${st.p} = ?`,st.r,`Take ${st.p} away from ${st.cur}.`,()=>{rev.s[si]=1;fresh='s'+si;phase='A';draw()});}
     else if(phase==='A'){const sw=el('span',{class:'sword',title:'Drag me onto the boss'},'⚔️');draggable(sw,'sword','⚔️');
-      box=el('div',{class:'ask'},el('p',{class:'prompt',html:`ATTACK! Grab the sword and swing it at the boss for <b style="color:var(--mS)">${st.p}</b> damage!`}),el('div',{class:'row'},sw,el('span',{class:'story'},'Drag it onto the boss.')),fb);
+      box=el('div',{class:'ask'},el('p',{class:'prompt',html:`ATTACK! Grab the sword and swing it at the boss for <b style="color:var(--mS)">${st.p}</b> damage!`}),el('div',{class:'row'},sw,el('button',{type:'button',class:'btn big2',onclick:()=>{const t=targets[0];if(t)t.drop('sword')}},'SWING ⚔️ (ENTER)'),el('span',{class:'story'},'Drag it onto the boss, or press Enter.')),fb);
       setTimeout(()=>{const bb=$('#bbar');if(bb)setTargets([{els:[bb],drop:x=>{if(x!=='sword')return false;S.crit=Math.random()<.25;if(S.crit){S.gems++;hud()}S.hit=st.p;phase='C';S.xp+=1;hud();draw();return true}}])},0);}
     else if(phase==='C'){const yes=el('button',{type:'button',class:'btn big2'},`YES, ${st.r} < ${d}`),no=el('button',{type:'button',class:'btn alt big2'},`NO`);
       const go=()=>{fresh=null;if(st.next!==null)phase='B';else if(st.r>0)phase='R';else return done();draw()};
@@ -453,6 +453,10 @@ function arena(q,d,cur,onPick){
     arenaLoop=requestAnimationFrame(step)};
   arenaLoop=requestAnimationFrame(step);setTimeout(()=>A.focus({preventScroll:true}),50);return A;
 }
+
+document.addEventListener('keydown',e=>{if(e.key!=='Enter'||(e.target.matches&&e.target.matches('input')))return;
+  const pick=document.querySelector('.overlay .btn:not([hidden]):not([disabled]), .overlay .chest')||document.querySelector('#world .btn.big2:not([hidden]):not([disabled])');
+  if(pick){e.preventDefault();pick.click()}});
 let lastSp=0;window.addEventListener('pointermove',e=>{const t=performance.now();if(t-lastSp<45)return;lastSp=t;const sp=el('span',{class:'spark'},['✨','⭐','💎','🟩'][rnd(0,3)]);sp.style.left=e.clientX+'px';sp.style.top=e.clientY+'px';document.body.append(sp);setTimeout(()=>sp.remove(),600)});
 $('#home').onclick=showMap;
 hud();showMap();
