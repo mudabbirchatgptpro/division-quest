@@ -70,8 +70,8 @@ body{font-family:var(--body);font-size:18px;line-height:1.45;padding:14px max(16
 .ask{display:grid;gap:10px;background:var(--panel2);border:3px solid var(--edge);border-radius:8px;padding:14px}
 .prompt{font-weight:800;font-size:1.3rem;margin:0}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-input[type=number]{font-family:var(--mono);font-size:1.7rem;width:8rem;padding:8px 12px;border-radius:6px;border:3px solid var(--edge);background:var(--slate);color:var(--ink)}
-input[type=number]:focus{outline:none;border-color:var(--gold)}
+input[type=number],input.typein{font-family:var(--mono);font-size:1.7rem;width:8rem;padding:8px 12px;border-radius:6px;border:3px solid var(--edge);background:var(--slate);color:var(--ink)}
+input[type=number]:focus,input.typein:focus{outline:none;border-color:var(--gold)}
 .btn{font-family:var(--pixel);font-size:.66rem;background:linear-gradient(#5ef08f,#22c55e);color:#05210f;transition:transform .12s;border:3px solid #0b1a05;border-bottom-width:6px;border-radius:5px;padding:12px 16px;cursor:pointer}
 .btn:active{border-bottom-width:3px;transform:translateY(3px)}
 .btn.alt{background:var(--panel2);color:var(--ink);border-color:#06090c}
@@ -286,11 +286,11 @@ function ladderNode(d,cur,{hidden,onPeek,draggableFor}={}){
     if(draggableFor)draggable(r,k,draggableFor==='M'?String(v):String(k));L.append(r)}
   return {node:L,rung:k=>rungs[k]};
 }
-function typeRow(label,submit){const inp=el('input',{type:'number',inputmode:'numeric','aria-label':label});const go=()=>{if(inp.value==='')return;const v=Number(inp.value);inp.value='';submit(v,inp)};
+function typeRow(label,submit){const inp=el('input',{type:'text',inputmode:'numeric',autocomplete:'off',class:'typein','aria-label':label});setTimeout(()=>inp.focus({preventScroll:true}),60);const go=()=>{if(inp.value==='')return;const v=Number(inp.value);inp.value='';submit(v,inp)};
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()});return el('div',{class:'row'},el('span',{class:'story',style:'font-weight:800;color:var(--ink)'},label),inp,el('button',{type:'button',class:'btn',onclick:go},'GO'))}
 function moves(on){return el('div',{class:'moves'},...[['D','1 DIVIDE'],['M','2 MULTIPLY'],['S','3 SUBTRACT'],['C','4 CHECK'],['B','5 BRING DOWN']].map(([k,t])=>el('span',{class:'mv '+k+(on===k?' on':'')},t)))}
 function numberAsk(prompt,ans,hint,ok,showMe){let tries=0;
-  const inp=el('input',{type:'number',inputmode:'numeric',id:'ans','aria-label':'Your answer'});const fb=el('p',{class:'fb',role:'status'});const hb=el('p',{class:'hint',hidden:''});
+  const inp=el('input',{type:'text',inputmode:'numeric',autocomplete:'off',class:'typein',id:'ans','aria-label':'Your answer'});const fb=el('p',{class:'fb',role:'status'});const hb=el('p',{class:'hint',hidden:''});
   const box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),el('div',{class:'row'},inp,el('button',{type:'button',class:'btn',onclick:()=>check()},'GO')),fb,hb);
   const check=()=>{if(inp.value==='')return;if(Number(inp.value)===ans){sGood();S.streak++;S.xp+=1;hud();fb.className='fb good';fb.textContent='Yes!';setTimeout(ok,280);return}
     tries++;sBad();S.streak=0;hud();shake(box);if(document.getElementById('bbar'))hurt();fb.className='fb bad';hb.hidden=false;hb.textContent=hint;fb.textContent=tries>=2?`It's ${ans}. Type ${ans} to keep going.`:'Not quite. Use the clue.';inp.select()};
@@ -432,10 +432,10 @@ function comboPop(n){const c=el('div',{class:'combo'},`COMBO x${n}!`);document.b
 const TAUNTS_D=['Let me iiin!','Knock knock…','Open uuup!','I can hear you…','Is anyone home?'];const TAUNTS=['Your move!','Bet you can\'t!','Too scared? 😜','Hurry, hero!','I\'m waiting…','Come on!'];
 function unNudge(){nudged=false;document.querySelectorAll('.nudge').forEach(x=>x.classList.remove('nudge'));document.querySelectorAll('.taunt').forEach(x=>x.remove())}
 setInterval(()=>{if(nudged||document.querySelector('.overlay'))return;if(performance.now()-lastAct>9000){nudged=true;
-  document.querySelectorAll('.c.slot,.c.src,.sword,.rung.guide,input[type=number],.btn.big2').forEach(x=>x.classList.add('nudge'));
+  document.querySelectorAll('.c.slot,.c.src,.sword,.rung.guide,input.typein,.btn.big2').forEach(x=>x.classList.add('nudge'));
   const bb=document.getElementById('bbar');if(bb)bb.append(el('div',{class:'taunt'},(S.door?TAUNTS_D:TAUNTS)[rnd(0,4)]));beep(700,.06,'sine',.04);setTimeout(()=>beep(900,.06,'sine',.04),90)}},1000);
 let lastHover=null;document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('button,.rung.drag,.c.src,.sword,.node');if(t&&t!==lastHover){lastHover=t;beep(1400,.02,'sine',.015)}});
-document.addEventListener('input',e=>{if(e.target.matches('input[type=number]')){e.target.classList.remove('tap');void e.target.offsetWidth;e.target.classList.add('tap');beep(800+rnd(0,300),.025,'sine',.02)}});
+document.addEventListener('input',e=>{if(e.target.matches('input')){e.target.classList.remove('tap');void e.target.offsetWidth;e.target.classList.add('tap');beep(800+rnd(0,300),.025,'sine',.02)}});
 document.addEventListener('keydown',e=>{if((e.key==='b'||e.key==='B')&&!e.target.matches('input')){let left=300;const t=el('p',{class:'big'},'5:00');const o=modal(el('h2',{},'BREAK TIME'),el('p',{class:'story'},'Stand up, stretch, drink water.'),t,el('button',{type:'button',class:'btn',onclick:()=>{clearInterval(iv);o.remove()}},'BACK TO THE GAME'));
   const iv=setInterval(()=>{left--;t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(left<=0){clearInterval(iv);o.remove()}},1000)}});
 
@@ -460,12 +460,13 @@ function arena(q,d,cur,onPick){
       if(Math.hypot(g.x-hx,g.y-hy)<42){g.dead=true;g.el.classList.add('boom');
         if(g.k===q){alive=false;onPick(g.k,g.el);return}else{onPick(g.k,g.el)}}}
     arenaLoop=requestAnimationFrame(step)};
-  arenaLoop=requestAnimationFrame(step);setTimeout(()=>A.focus({preventScroll:true}),50);return A;
+  arenaLoop=requestAnimationFrame(step);return A;
 }
 
 document.addEventListener('keydown',e=>{if(e.key!=='Enter'||(e.target.matches&&e.target.matches('input')))return;
   const pick=document.querySelector('.overlay .btn:not([hidden]):not([disabled]), .overlay .chest')||document.querySelector('#world .btn.big2:not([hidden]):not([disabled])');
   if(pick){e.preventDefault();pick.click()}});
+document.addEventListener('pointerup',()=>setTimeout(()=>{const a=document.activeElement;if(a&&a.matches&&a.matches('input'))return;if(document.querySelector('.overlay'))return;const t=document.querySelector('#world input.typein');if(t)t.focus({preventScroll:true})},80));
 let lastSp=0;window.addEventListener('pointermove',e=>{const t=performance.now();if(t-lastSp<45)return;lastSp=t;const sp=el('span',{class:'spark'},['✨','⭐','💎','🟩'][rnd(0,3)]);sp.style.left=e.clientX+'px';sp.style.top=e.clientY+'px';document.body.append(sp);setTimeout(()=>sp.remove(),600)});
 $('#home').onclick=showMap;
 hud();showMap();
