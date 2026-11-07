@@ -145,7 +145,7 @@ input.tap{animation:pop .2s}
   <div class="hud">
     <button class="logo" id="home" type="button">DIVISION QUEST</button>
     <div class="stats">
-      <span class="chip">GAME <b id="lvl">-</b>/10</span>
+      <span class="chip">GAME <b id="lvl">-</b>/11</span>
       <span class="chip">⭐ <b id="stars">0</b></span>
       <span class="chip">💎 <b id="gems">0</b></span>
       <span class="chip">🔥 <b id="streak">0</b></span>
@@ -182,6 +182,7 @@ const GAMES=[
  {title:'Four by Two',skill:'4-digit ÷ 2-digit',type:'algo',probs:[[1830,15,'full'],[2016,24,'full']],intro:'This is what your class is doing. More loops, same moves.'},
  {title:'Bug Hunter',skill:'Check like a pro',type:'bug',probs:[[945,5],[258,12],[1830,15]],intro:'Each board has one mistake. Tap the wrong number.'},
  {title:'Boss Battle',skill:'Everything',type:'algo',probs:[[1456,14,'boss'],[9072,36,'boss']],intro:'Ladder is hidden. Peek if you need it. You know every move.'},
+ {title:'Boss Rush',skill:'50 bosses, every step yours',type:'algo',probs:[[431, 4, "boss"], [504, 2, "boss"], [174, 3, "boss"], [474, 2, "boss"], [619, 5, "boss"], [138, 3, "boss"], [544, 8, "boss"], [171, 5, "boss"], [192, 8, "boss"], [160, 3, "boss"], [4657, 8, "boss"], [2013, 7, "boss"], [3181, 5, "boss"], [6054, 7, "boss"], [4078, 5, "boss"], [2596, 7, "boss"], [2028, 7, "boss"], [1976, 7, "boss"], [4374, 6, "boss"], [3945, 8, "boss"], [918, 18, "boss"], [427, 27, "boss"], [626, 21, "boss"], [866, 25, "boss"], [414, 13, "boss"], [548, 16, "boss"], [895, 21, "boss"], [275, 26, "boss"], [551, 12, "boss"], [804, 13, "boss"], [902, 28, "boss"], [706, 21, "boss"], [468, 22, "boss"], [728, 26, "boss"], [713, 25, "boss"], [2126, 17, "boss"], [5422, 42, "boss"], [2064, 15, "boss"], [6072, 48, "boss"], [8301, 30, "boss"], [7320, 34, "boss"], [1369, 41, "boss"], [6823, 22, "boss"], [2918, 43, "boss"], [1965, 25, "boss"], [5709, 20, "boss"], [5056, 37, "boss"], [7405, 43, "boss"], [2320, 22, "boss"], [8359, 37, "boss"]],intro:'50 bosses in a row, easy to hard. You do every move. Ladder hidden, peek any time.'},
 ];
 const S={g:-1,stars:0,gems:0,streak:0,xp:0,done:new Set(),audio:null};
 try{const sv=JSON.parse(localStorage.getItem('dq')||'null');if(sv){S.stars=sv.stars||0;S.gems=sv.gems||0;S.xp=sv.xp||0;S.done=new Set(sv.done||[])}}catch(e){}
@@ -397,7 +398,7 @@ function flip(next){S.stars++;hud();
   f.onclick=()=>{f.disabled=true;coin.classList.add('spin');beep(400,.7,'triangle',.03);setTimeout(()=>{const w=Math.random()<.5;coin.textContent=w?'💎':'—';msg.textContent=w?'HEADS! Bonus diamond!':'Tails. Your star is safe.';if(w){S.gems++;sWin();hud()}n.hidden=false;n.focus()},900)};
   n.onclick=()=>{o.remove();next()};f.focus()}
 function gameWon(gi){S.done.add(gi);S.xp+=15;hud();sWin();confetti();
-  if(gi===9)return modal(el('h2',{},'YOU BEAT LONG DIVISION'),el('p',{class:'prompt'},`⭐ ${S.stars} · 💎 ${S.gems}`),el('p',{class:'story'},'Thursday this felt too hard. Today you beat 9,072 ÷ 36.'),el('p',{class:'story'},'A locked chest opens next session. 🔒'),el('button',{type:'button',class:'btn',onclick:e=>{e.target.closest('.overlay').remove();showMap()}},'MAP'));
+  if(gi===GAMES.length-1)return modal(el('h2',{},'YOU BEAT LONG DIVISION'),el('p',{class:'prompt'},`⭐ ${S.stars} · 💎 ${S.gems}`),el('p',{class:'story'},'Thursday this felt too hard. Today you beat 50 bosses in a row.'),el('p',{class:'story'},'A locked chest opens next session. 🔒'),el('button',{type:'button',class:'btn',onclick:e=>{e.target.closest('.overlay').remove();showMap()}},'MAP'));
   const c=el('button',{type:'button',class:'chest','aria-label':'Open the mystery chest'},'🎁');
   const o=modal(el('h2',{},`GAME ${gi+1} COMPLETE`),el('p',{class:'story'},'The next game is a mystery. Tap the chest.'),c);
   c.onclick=()=>{sWin();const G=GAMES[gi+1];o.querySelector('.modal').replaceChildren(el('h2',{},`GAME ${gi+2}: ${G.title.toUpperCase()}`),el('p',{class:'prompt'},G.skill),el('p',{class:'story'},G.intro),
@@ -406,8 +407,8 @@ function breakTime(n){let left=300;const t=el('p',{class:'big'},'5:00');const o=
   const iv=setInterval(()=>{left--;t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(left<=0){clearInterval(iv);o.remove();start(n)}},1000)}
 function start(gi){S.g=gi;hud();setTargets([]);const G=GAMES[gi];window.scrollTo({top:0,behavior:'smooth'});
   if(G.type==='algo')algoGame(gi,0);else if(G.type==='ladder')ladderGame(gi);else bugGame(gi)}
-function showMap(){[0,1,2,3,4,5].forEach(i=>S.done.add(i));S.g=-1;hud();setTargets([]);const next=[...Array(10).keys()].find(i=>!S.done.has(i));
-  $('#world').replaceChildren(el('div',{class:'top'},el('span',{class:'qtitle'},'QUEST MAP · 10 GAMES · EASY TO HARD'),el('span',{class:'story'},'Long division = 5 moves on repeat')),moves(null),
+function showMap(){[0,1,2,3,4,5,6,7,8,9].forEach(i=>S.done.add(i));S.g=-1;hud();setTargets([]);const next=[...Array(GAMES.length).keys()].find(i=>!S.done.has(i));
+  $('#world').replaceChildren(el('div',{class:'top'},el('span',{class:'qtitle'},'QUEST MAP · 11 GAMES · EASY TO HARD'),el('span',{class:'story'},'Long division = 5 moves on repeat')),moves(null),
     el('div',{class:'map'},...GAMES.map((G,i)=>{const done=S.done.has(i),isNext=i===next;
       return el('button',{type:'button',class:'node'+(done?' done':isNext?' next':' locked'),onclick:()=>{if(done||isNext)start(i);else{sBad()}}},
         el('span',{class:'n'},done?`✓ GAME ${i+1}`:`GAME ${i+1}`),el('span',{class:'t'},done||isNext?G.title:'???'),el('span',{class:'story'},done||isNext?G.skill:'Mystery'))})),
