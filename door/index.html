@@ -185,7 +185,7 @@ const GAMES=[
 ];
 const S={g:-1,stars:0,gems:0,streak:0,xp:0,done:new Set(),audio:null};
 try{const sv=JSON.parse(localStorage.getItem('dq-door')||'null');if(sv){S.stars=sv.stars||0;S.gems=sv.gems||0;S.xp=sv.xp||0;S.done=new Set(sv.done||[])}}catch(e){}
-[0,1,2,3,4].forEach(i=>S.done.add(i));
+[0,1,2,3,4,5].forEach(i=>S.done.add(i));
 function save(){try{localStorage.setItem('dq-door',JSON.stringify({stars:S.stars,gems:S.gems,xp:S.xp,done:[...S.done]}))}catch(e){}}
 function hud(){const lt=document.getElementById('loot');if(lt&&S.loot)lt.textContent=S.loot.length;$('#lvl').textContent=S.g<0?'-':S.g+1;$('#stars').textContent=S.stars;$('#gems').textContent=S.gems;$('#streak').textContent=S.streak;$('#xp').style.width=Math.min(100,S.xp%101)+'%';save()}
 
