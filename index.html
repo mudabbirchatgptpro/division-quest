@@ -278,6 +278,8 @@ function ladderNode(d,cur,{hidden,onPeek,draggableFor}={}){
     if(draggableFor)draggable(r,k,draggableFor==='M'?String(v):String(k));L.append(r)}
   return {node:L,rung:k=>rungs[k]};
 }
+function typeRow(label,submit){const inp=el('input',{type:'number',inputmode:'numeric','aria-label':label});const go=()=>{if(inp.value==='')return;const v=Number(inp.value);inp.value='';submit(v,inp)};
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()});return el('div',{class:'row'},el('span',{class:'story',style:'font-weight:800;color:var(--ink)'},label),inp,el('button',{type:'button',class:'btn',onclick:go},'GO'))}
 function moves(on){return el('div',{class:'moves'},...[['D','1 DIVIDE'],['M','2 MULTIPLY'],['S','3 SUBTRACT'],['C','4 CHECK'],['B','5 BRING DOWN']].map(([k,t])=>el('span',{class:'mv '+k+(on===k?' on':'')},t)))}
 function numberAsk(prompt,ans,hint,ok,showMe){let tries=0;
   const inp=el('input',{type:'number',inputmode:'numeric',id:'ans','aria-label':'Your answer'});const fb=el('p',{class:'fb',role:'status'});const hb=el('p',{class:'hint',hidden:''});
@@ -314,10 +316,14 @@ function algoGame(gi,pi){
     if(phase==='B'){prompt=`<b style="color:var(--mB)">Bring down.</b> ${auto?'':'Grab the glowing digit and drag it down into the box.'}`;say=`Bring down the ${st.digit}. Now we have ${st.next}.`;
       const src=B.cell('top-'+st.nextCol);if(!auto)draggable(src,'bd',String(st.digit));
       setTargets([{els:[B.cell(`w${si}-${st.nextCol}`)],drop:p=>{if(p==='bd'){sDrop();rev.b[si]=1;fresh='b'+si;si++;phase='D';miss=0;S.xp+=1;hud();draw();return true}return false}}]);}
+    const typed=(v,inp)=>{const t=targets[0];if(!t)return;
+      if(phase==='D')attempt(t,v,inp);
+      else if(phase==='M'){if(v===st.p)attempt(t,st.q,inp);else{sBad();shake(inp);wrong(`${st.q} × ${d} is not ${v}. Use the ladder.`)}}
+      else if(phase==='B'){if(v===st.next)attempt(t,'bd',inp);else{sBad();shake(inp);wrong(`Put ${st.digit} next to ${st.r}.`)}}};
     if(auto&&['D','M','B'].includes(phase)){
       box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),el('p',{class:'story',style:'color:var(--ink);font-size:1.15rem'},say),
         el('div',{class:'row'},el('button',{type:'button',class:'btn big2',id:'nx',onclick:()=>{$('#nx').disabled=true;autoMove(B,Lad)}},'SHOW ▶')));
-    }else if(phase==='D'){box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),arena(st.q,d,st.cur,(k,ge)=>attempt(targets[0],k,ge)),el('p',{class:'story'},'Or drag the ladder rung up to the top box.'),el('div',{class:'row'},showBtn),fb,hb);}
+    }else if(phase==='D'){box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),arena(st.q,d,st.cur,(k,ge)=>attempt(targets[0],k,ge)),typeRow('Or type it:',typed),el('p',{class:'story'},'Or drag the ladder rung up to the top box.'),el('div',{class:'row'},showBtn),fb,hb);}
     else if(phase==='S'){box=numberAsk(`<b style="color:var(--mS)">Subtract.</b> ${st.cur} − ${st.p} = ?`,st.r,`Take ${st.p} away from ${st.cur}.`,()=>{rev.s[si]=1;fresh='s'+si;phase='A';draw()});}
     else if(phase==='A'){const sw=el('span',{class:'sword',title:'Drag me onto the boss'},'⚔️');draggable(sw,'sword','⚔️');
       box=el('div',{class:'ask'},el('p',{class:'prompt',html:`ATTACK! Grab the sword and swing it at the boss for <b style="color:var(--mS)">${st.p}</b> damage!`}),el('div',{class:'row'},sw,el('span',{class:'story'},'Drag it onto the boss.')),fb);
@@ -328,7 +334,7 @@ function algoGame(gi,pi){
       box=el('div',{class:'ask'},el('p',{class:'prompt',html:`<b style="color:#e8c22e">Check.</b> Is ${st.r} smaller than ${d}?`}),el('p',{class:'story'},'If the leftover is not smaller, the Divide number was too small.'),el('div',{class:'chkbtns'},yes,no),fb);
       if(mode==='watch')setTimeout(()=>yes.focus(),40)}
     else if(phase==='R'){box=numberAsk(`Nothing left to bring down. What is the <b>remainder</b>?`,st.r,`The last number after subtracting.`,()=>done())}
-    else box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),el('div',{class:'row'},showBtn),fb,hb);
+    else box=el('div',{class:'ask'},el('p',{class:'prompt',html:prompt}),typeRow(phase==='M'?'Or type the answer:':'Or type the new number:',typed),el('div',{class:'row'},showBtn),fb,hb);
     showBtn.onclick=()=>{showBtn.disabled=true;autoMove(B,Lad)};
     world.replaceChildren(
       el('div',{class:'top'},el('span',{class:'qtitle'},`GAME ${gi+1} · ${G.title.toUpperCase()} · PROBLEM ${pi+1} OF ${G.probs.length}${mode==='guided'?' · GUIDED':''}`),el('span',{class:'big'},`${N.toLocaleString()} ÷ ${d}`)),
