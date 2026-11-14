@@ -78,6 +78,12 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
 .dmg.crit{font-size:68px}
 #start h1{font-weight:400;font-size:54px;-webkit-text-stroke:2px #000}
 #chest h2{font-weight:400;-webkit-text-stroke:1px #000}
+#rules{display:none;gap:6px;justify-content:center;flex-wrap:wrap;margin:2px 0 6px}
+#rules span{padding:3px 9px;border-radius:9px;background:#2a1f0e;border:2px solid #6b5020;color:#bfa36a;font-size:15px}
+#rules span.on{background:linear-gradient(180deg,#ffe066,#f0a500);color:#2a1600;border-color:#fff3b0;transform:scale(1.12)}
+#rules span.ok{background:#1d7a37;border-color:#4bd06b;color:#fff}
+#board{display:none;font-size:18px;color:#ffe27a;margin-bottom:6px;text-shadow:0 2px 0 #000;white-space:pre-line}
+#stepAsk{font-size:22px;color:#fff;margin:4px 0 8px;text-shadow:0 2px 0 #000}
 </style>
 </head>
 <body>
@@ -95,6 +101,7 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
 <div id="boss"><div id="bname"></div><div id="bsub"></div><div id="hpbar"><div id="hp"></div></div></div>
 <div class="hud" id="bottom"><div class="panel" id="qbox">
   <div id="prompt"></div><div id="q"></div>
+  <div id="rules"></div><div id="board"></div>
   <div id="inputs"></div>
   <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
     <button class="btn" id="go">ATTACK ⚔️</button>
@@ -141,14 +148,14 @@ const GEN={
    hint:`Try ${t} × ${d} = ${f(t*d)}.  ${f(n)} − ${f(t*d)} = ${f(n-t*d)}.\nHow many ${d}s in ${f(n-t*d)}? Then add.`}},
  // 5-5 standard algorithm, 3-digit by 2-digit, remainders
  algo3(){let d,q,r,n;do{d=R(23,89);q=R(12,39);r=Math.random()<.35?0:R(1,d-1);n=d*q+r;}while(n>999||n<400);
-  return {prompt:'Divide. Multiply. Subtract. Bring down. (Remainder can be 0.)',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,
+  return {prompt:'Divide. Multiply. Subtract. Bring down. (Remainder can be 0.)',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,
    hint:`Multiples ladder: ${d}, ${d*2}, ${d*3}, ${d*4}, ${d*5} …\nCheck: ${d} × quotient + remainder = ${f(n)}`}},
  // 5-6 4-digit by 2-digit
  algo4(){let d,q,r,n;do{d=R(23,89);q=R(104,399);r=Math.random()<.35?0:R(1,d-1);n=d*q+r;}while(n>9999||n<3000);
-  return {prompt:'Big one: 4-digit ÷ 2-digit. Estimate first, then divide.',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,
+  return {prompt:'Big one: 4-digit ÷ 2-digit. Estimate first, then divide.',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,
    hint:`Estimate: about ${f(Math.round(n/100)*100)} ÷ ${Math.round(d/10)*10||10}.\nLadder: ${d}, ${d*2}, ${d*3} … ${d*9}`}},
  // 5-7 choose a strategy (mix)
- mix(){return GEN[pick(['pattern','partial','algo3','algo4','model'])]();},
+ mix(){const c=GEN[pick(['algo4','algo4','algo3','partial'])]();return c;},
  // 5-8 word problems, interpret the remainder
  word(){const t=pick([0,1,2,3,4,5]);
   if(t===0){const per=R(24,52),n=per*R(4,9)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`${n} students go on a trip. Each bus holds ${per}. How many buses are needed?`,ans:a,rem:null,word:true,hint:`${n} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The leftover students still need a seat!`}}
@@ -165,10 +172,24 @@ const BOSSES=[
  {lesson:'5-4',name:'CHUNK RAIDER',sub:'Partial quotients',model:'character-raider',gen:'partial',hp:5,tint:0xffa94d},
  {lesson:'5-5',name:'SERGEANT REMAINDER',sub:'3-digit ÷ 2-digit',model:'character-soldier',gen:'algo3',hp:5,tint:0xff6b6b},
  {lesson:'5-6',name:'THE MEGA FOREMAN',sub:'4-digit ÷ 2-digit',model:'character-worker',gen:'algo4',hp:5,tint:0xffd23f},
- {lesson:'5-7',name:'THE SHAPESHIFTER',sub:'Choose a strategy',model:'character-male-e',gen:'mix',hp:6,tint:0xff4dd2},
+ {lesson:'5-7',name:'THE SHAPESHIFTER',sub:'Choose a strategy (master this first!)',model:'character-male-e',gen:'mix',hp:6,tint:0xff4dd2},
  {lesson:'5-8',name:'QUEEN OF WORDS',sub:'Word problems & remainders',model:'character-female-d',gen:'word',hp:6,tint:0xff3d3d},
 ];
 
+const ladder=d=>[1,2,3,4,5,6,7,8,9].map(k=>f(k*d)).join(', ');
+function buildSteps(n,d){const ds=String(n).split('').map(Number);let i=0,cur=0;
+ while(i<ds.length-1&&cur*10+ds[i]<d){cur=cur*10+ds[i];i++}
+ cur=cur*10+ds[i];i++;const st=[];
+ while(true){const qd=Math.floor(cur/d),pr=qd*d,rm=cur-pr;
+  st.push({k:'D',ask:`DIVIDE: How many ${d}s fit in ${f(cur)}?`,ans:qd,qd,hint:`Rule: biggest multiple of ${d} that is NOT more than ${f(cur)}.\nLadder: ${ladder(d)}\nIf ${d} doesn't fit at all, the answer is 0.`});
+  st.push({k:'M',ask:`MULTIPLY: ${qd} × ${d} = ?`,ans:pr,hint:`Rule: multiply the number you just wrote on top by ${d}.`});
+  st.push({k:'S',ask:`SUBTRACT: ${f(cur)} − ${f(pr)} = ?`,ans:rm,hint:`Rule: after you subtract, the answer must be LESS than ${d}.`});
+  if(i<ds.length){const nx=rm*10+ds[i];st.push({k:'B',ask:`BRING DOWN the next digit (${ds[i]}). What is the new number?`,ans:nx,hint:`Rule: write the ${ds[i]} right next to ${rm}.`});cur=nx;i++}
+  else break}
+ const Q=Math.floor(n/d),Rm=n%d;
+ st.push({k:'C',ask:`CHECK: ${f(Q)} × ${d} + ${Rm} = ?`,ans:n,hint:`Rule: quotient × divisor + remainder must equal ${f(n)}.`});
+ return st}
+const RULES={D:'1 DIVIDE',M:'2 MULTIPLY',S:'3 SUBTRACT',B:'4 BRING DOWN',C:'✓ CHECK'};
 /* ---------- state ---------- */
 const S={lvl:0,hp:0,mins:0,gems:0,streak:0,tries:0,cur:null,done:new Set(),sound:true,busy:false};
 try{const s=JSON.parse(localStorage.getItem('t5g')||'{}');if(s.mins)S.mins=s.mins;if(s.gems)S.gems=s.gems;if(s.done)S.done=new Set(s.done);}catch(e){}
@@ -266,16 +287,31 @@ function drawMap(){const m=$('map');m.innerHTML='';BOSSES.forEach((b,i)=>{const 
  bt.className=(S.done.has(i)?'done ':'')+(i===S.lvl?'cur':'');bt.title=b.name+': '+b.sub;bt.onclick=()=>startLevel(i);m.appendChild(bt)})}
 function stats(){$('mins').textContent=S.mins;$('gems').textContent=S.gems;$('streak').textContent=S.streak;save()}
 function newQ(){S.cur=GEN[BOSSES[S.lvl].gen]();S.tries=0;const c=S.cur;$('prompt').textContent=c.prompt;$('q').textContent=c.q;$('hint').textContent='';
- const box=$('inputs');box.innerHTML='';
+ const box=$('inputs');box.innerHTML='';$('rules').style.display='none';$('board').style.display='none';
+ if(c.steps){S.st=buildSteps(c.n,c.d);S.si=0;S.qs='';S.stTries=0;$('prompt').textContent='Long division, one move at a time. Does McDonald\'s Sell Nuggets? Then CHECK!';renderStep();return}
  const mk=(id,ph)=>{const i=document.createElement('input');i.id=id;i.placeholder=ph;i.inputMode='numeric';i.autocomplete='off';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(id==='a'&&$('r')&&!$('r').value&&$('a').value)$('r').focus();else submit()}};return i};
  if(c.rem!==null){box.append(lbl('Q'),mk('a','quotient'),lbl('R'),mk('r','remainder'))}else box.append(mk('a',c.est?'estimate':'answer'));
  setTimeout(()=>$('a').focus(),50)}
+function renderStep(){const st=S.st[S.si];const r=$('rules');r.style.display='flex';
+ r.innerHTML=['D','M','S','B','C'].map(k=>`<span class="${k===st.k?'on':''}">${RULES[k]}</span>`).join('');
+ const b=$('board');b.style.display='block';b.textContent='Quotient so far: '+(S.qs?Number(S.qs).toLocaleString('en-US'):'?')+'  (÷ '+S.cur.d+')';
+ const box=$('inputs');box.innerHTML='';const ask=document.createElement('div');ask.id='stepAsk';ask.textContent=st.ask;
+ const i=document.createElement('input');i.id='a';i.inputMode='numeric';i.autocomplete='off';i.placeholder='?';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit()}};
+ box.style.flexDirection='column';box.append(ask,i);$('hint').textContent='';setTimeout(()=>i.focus(),30)}
+function stepSubmit(){const st=S.st[S.si];const v=num($('a').value);if(isNaN(v))return;
+ if(v===st.ans){S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);play('ok');playClip(heroMix,heroClips,'attack-melee-right',true);
+  const p=boss.position.clone();p.y+=1.4;burst(p,0xffffff,12,3);shake=.08;
+  S.si++;if(S.si>=S.st.length){$('inputs').style.flexDirection='';$('hint').textContent='';hit();return}
+  if(S.st[S.si].k==='C')toast('CHECK IT!',700,'#3fdc7a');renderStep()}
+ else{S.stTries++;S.streak=0;stats();play('wrong');playClip(bossMix,bossClips,'attack-melee-right',true);knock(hero,-.4);
+  if(S.stTries===1){$('hint').textContent='Blocked! '+st.hint;$('a').value='';$('a').focus()}
+  else{$('hint').textContent=`It's ${f(st.ans)}. ${st.hint}`;S.busy=true;setTimeout(()=>{S.busy=false;S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);S.si++;if(S.si>=S.st.length){$('inputs').style.flexDirection='';newQ()}else renderStep()},2600)}}}
 const lbl=t=>{const l=document.createElement('label');l.textContent=t;return l};
 const num=v=>v===''?NaN:Number(String(v).replace(/[, ]/g,''));
 async function startLevel(i){S.lvl=i;S.hp=BOSSES[i].hp;S.busy=true;const b=BOSSES[i];
  $('bname').textContent=`${b.lesson} · ${b.name}`;$('bsub').textContent=b.sub;$('hp').style.width='100%';drawMap();
  await setBoss(i);S.busy=false;toast(b.name+'!',1200,'#'+b.tint.toString(16).padStart(6,'0'));newQ()}
-function submit(){if(S.busy||!S.cur)return;const c=S.cur;const a=num($('a').value);const r=$('r')?num($('r').value||'0'):null;
+function submit(){if(S.busy||!S.cur)return;const c=S.cur;if(c.steps)return stepSubmit();const a=num($('a').value);const r=$('r')?num($('r').value||'0'):null;
  if(isNaN(a)){$('a').focus();return}
  let ok;if(c.est){ok=Math.abs(a-c.ans)<=Math.max(1,c.ans*.15)||Math.abs(a-c.exact)<=Math.max(1,c.exact*.15)}else ok=a===c.ans&&(c.rem===null||r===c.rem);
  if(ok)hit();else miss()}
@@ -313,8 +349,8 @@ addEventListener('keydown',e=>{if((e.key==='w'||e.key==='W')&&document.activeEle
  await Promise.all(BOSSES.map(b=>load('m/'+b.model+'.glb')));
  $('load').textContent='';$('startBtn').disabled=false;$('startBtn').textContent='ENTER THE ARENA ⚔️';
 }catch(e){$('load').textContent='Load error: '+e.message;console.error(e)}})();
-const ORDER=[5,4,7,6,3,2,1,0];
-$('startBtn').onclick=()=>{$('start').style.display='none';const first=ORDER.find(i=>!S.done.has(i));startLevel(first===undefined?5:first)};
+const ORDER=[6,5,4,3,2,1,0,7];
+$('startBtn').onclick=()=>{$('start').style.display='none';const first=ORDER.find(i=>!S.done.has(i));startLevel(first===undefined?6:first)};
 drawMap();stats();
 </script>
 </body>
