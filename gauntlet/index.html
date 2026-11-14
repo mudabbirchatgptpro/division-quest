@@ -90,6 +90,37 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
  #boss{left:calc(50% - 220px)}
 }
 @media (max-width:900px){#qbox{max-height:48vh;overflow:auto}}
+
+body.stepmode #boss{top:60px}body.stepmode #bsub{display:none}
+body.stepmode #bottom{top:150px;bottom:14px;left:0;right:0;justify-content:center;align-items:flex-start}
+body.stepmode #qbox{width:min(1120px,96vw);display:grid;grid-template-columns:1.25fr 1fr;grid-template-areas:'p p' 'q q' 'b r' 'b i' 'b h';column-gap:22px;align-items:start}
+body.stepmode #prompt{grid-area:p}body.stepmode #q{grid-area:q;font-size:34px;margin:0 0 6px}
+body.stepmode #board{grid-area:b;display:block}body.stepmode #rules{grid-area:r;flex-direction:column;align-items:stretch}
+body.stepmode #inputs{grid-area:i}body.stepmode #hint{grid-area:h}
+body.stepmode #qbox>div:nth-last-child(2){grid-column:2}
+body.stepmode #rules span{font-size:20px;padding:6px 10px;text-align:left}
+#board{background:#163828;border:6px solid #6b4a1e;border-radius:12px;padding:14px 10px;box-shadow:inset 0 0 30px rgba(0,0,0,.6);min-height:300px}
+table.ld{border-collapse:collapse;margin:0 auto;font-size:clamp(28px,3.4vw,44px);color:#f4f7ef;font-variant-numeric:tabular-nums}
+table.ld td{width:1.05em;height:1.25em;text-align:center;padding:0;line-height:1.2}
+table.ld td.dv{width:auto;padding-right:2px;color:#9fe0ff;text-align:right}
+table.ld td.br{color:#fff;font-size:1.15em;width:.5em}
+table.ld td.dd{border-top:4px solid #fff}
+table.ld td.q{color:#ffe27a}
+table.ld td.ul{border-bottom:4px solid #fff}
+table.ld td.ms{color:#ff9f9f}
+table.ld td.hot{background:rgba(255,210,63,.25);outline:3px solid #ffd23f;border-radius:6px;color:#ffd23f;animation:pulse 1s infinite}
+table.ld td.arr{color:#ffd23f;text-decoration:underline;text-decoration-thickness:4px}
+table.ld td.bd{color:#7fe3a0}
+@keyframes pulse{50%{background:rgba(255,210,63,.5)}}
+.chk{margin-top:10px;font-size:22px;color:#7fe3a0;text-align:center}
+#stepAsk{font-size:24px}
+#playbar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:none;font-size:24px;padding:10px 18px;border-radius:14px;background:linear-gradient(180deg,rgba(40,28,10,.85),rgba(18,12,4,.9));border:3px solid #c9932e;color:#fff;text-shadow:0 2px 0 #000;z-index:6}
+#playbar b{color:#ffd23f}
+body.playing #bottom,body.playing #boss{display:none!important}
+body.playing #playbar{display:block}
+.chalk{font-size:clamp(22px,2.4vw,30px);color:#f4f7ef;line-height:1.35;padding:6px 10px;text-align:left}
+.rulecard{background:linear-gradient(180deg,#ffe066,#f0a500);color:#2a1600;border:3px solid #000;border-radius:12px;padding:10px 12px;font-size:19px;line-height:1.3;box-shadow:0 4px 0 #6b3d00}
+.rulecard b{font-size:22px}
 </style>
 </head>
 <body>
@@ -115,7 +146,7 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
   </div>
   <div id="hint"></div>
 </div></div>
-<div id="toast"></div>
+<div id="toast"></div><div id="playbar"><span id="ptxt"></span><div style="font-size:15px;opacity:.85;margin-top:2px">Move: arrows / WASD / click · Jump: SPACE <button class="btn sm" id="skipEx" style="margin-left:8px">skip to questions ▶</button></div></div>
 <div id="chest"><div class="panel"><div id="chestIcon" style="font-size:80px">🧰</div><h2 id="chestTitle"></h2><div id="chestText" style="font-size:20px"></div><br><button class="btn" id="chestGo">NEXT GATE ▶</button></div></div>
 <div id="start"><div class="panel">
   <h1>TOPIC 5 GATE QUEST</h1>
@@ -138,21 +169,21 @@ const hardD=(lo,hi)=>{let d;do{d=R(lo,hi)}while(Math.random()<.65&&d%10<6);retur
 const zeroQ3=()=>{const h=R(1,4),o=R(1,9);return Math.random()<.55?h*100+o:R(101,409)};
 const GEN={
  // 5-1 patterns and mental math
- pattern(){const q=R(4,9)*pick([10,100,1000]);const d=R(4,9)*10;const n=q*d;
-  return {prompt:'Use patterns. Cross out zeros, then use a basic fact.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
+ pattern(){let q,d;if(Math.random()<.45){const pr=pick([[4,5],[6,5],[8,5],[2,5],[4,5],[8,5]]);d=pr[1]*10*pick([1,1,10]);q=pr[0]*pick([10,100]);}else{q=R(4,9)*pick([10,100]);d=R(4,9)*10;}const n=q*d;
+  return {rule:'Cross out the SAME number of zeros from both numbers. Do the basic fact. Careful: 40 ÷ 5 = 8 already used a zero!',prompt:'Use patterns. Cross out zeros, then use a basic fact.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`Think: ${d} × ? = ${f(n)}\nCross out one zero from each: ${f(n/10)} ÷ ${d/10}`}},
  // 5-2 estimate with compatible numbers
  estimate(){const d0=R(4,9)*10,q0=R(3,9)*pick([10,100]);const C=d0*q0;let n;do{n=C+R(-Math.round(C*.04),Math.round(C*.04));}while(n===C||n<10);
   let d;do{d=d0+R(-2,2);}while(d===d0);
-  return {prompt:'ESTIMATE with friendly (compatible) numbers.',q:`${f(n)} ÷ ${d} ≈ ?`,ans:q0,exact:n/d,rem:null,est:true,
+  return {rule:'Change BOTH numbers to friendly numbers that divide easily (a basic fact), then divide.',prompt:'ESTIMATE with friendly (compatible) numbers.',q:`${f(n)} ÷ ${d} ≈ ?`,ans:q0,exact:n/d,rem:null,est:true,
    hint:`Friendly numbers: ${f(n)} is close to ${f(C)}, and ${d} is close to ${d0}.\n${f(C)} ÷ ${d0} = ?`}},
  // 5-3 models (2-digit quotient, area model)
  model(){const d=R(13,29),q=R(14,19);const n=d*q;
-  return {prompt:'Use an area model: take 10 groups first, then the rest.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
+  return {rule:'Take 10 groups first. Subtract. See how many groups are left. ADD them to 10.',prompt:'Use an area model: take 10 groups first, then the rest.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`10 × ${d} = ${d*10}.  ${n} − ${d*10} = ${n-d*10}.\nHow many ${d}s in ${n-d*10}? Add it to 10.`}},
  // 5-4 partial quotients
  partial(){const d=hardD(23,48),q=R(31,89);const n=d*q;const t=Math.floor(q/10)*10;
-  return {prompt:'Partial quotients: take a big friendly chunk, subtract, repeat, then add the chunks.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
+  return {rule:'Take a big friendly chunk (×10, ×20, ×30…). Subtract. Repeat. Then ADD all the chunks.',prompt:'Partial quotients: take a big friendly chunk, subtract, repeat, then add the chunks.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`Try ${t} × ${d} = ${f(t*d)}.  ${f(n)} − ${f(t*d)} = ${f(n-t*d)}.\nHow many ${d}s in ${f(n-t*d)}? Then add.`}},
  // 5-5 standard algorithm, 3-digit by 2-digit, remainders
  algo3(){let d,q,r,n;do{d=hardD(23,89);q=Math.random()<.3?R(1,3)*10:R(12,39);r=Math.random()<.25?0:R(1,d-1);n=d*q+r;}while(n>999||n<400);
@@ -167,13 +198,13 @@ const GEN={
  // test traps
  detective(){let d,q,r,n;do{d=hardD(23,39);q=R(1,2)*100+R(1,9);r=R(1,d-1);n=d*q+r}while(n>9999);
   const wrong=Number(String(q).replace('0',''));
-  return {prompt:'ERROR DETECTIVE: find the mistake.',q:`Max says ${f(n)} ÷ ${d} = ${wrong} R${r}`,ans:q,rem:null,
+  return {rule:"Check: quotient × divisor + remainder = dividend. If the divisor doesn't fit after you bring down, write 0.",prompt:'ERROR DETECTIVE: find the mistake.',q:`Max says ${f(n)} ÷ ${d} = ${wrong} R${r}`,ans:q,rem:null,
    ph:'correct quotient',hint:`Check Max: ${wrong} × ${d} + ${r} = ${f(wrong*d+r)}, not ${f(n)}.\nRule: if ${d} doesn't fit after you bring down, write 0 in the quotient!`}},
  missing(){const d=hardD(23,68),q=R(41,189),r=R(1,d-1);
-  return {prompt:'Work BACKWARD.',q:`? ÷ ${d} = ${q} R${r}`,ans:d*q+r,rem:null,ph:'dividend',
+  return {rule:'dividend = quotient × divisor + remainder.',prompt:'Work BACKWARD.',q:`? ÷ ${d} = ${q} R${r}`,ans:d*q+r,rem:null,ph:'dividend',
    hint:`Rule: quotient × divisor + remainder = dividend.\n${q} × ${d} + ${r} = ?`}},
  place(){const d=hardD(23,89);const q=R(12,99)*pick([1,1,10]);const n=d*q+R(0,d-1);const Q=Math.floor(n/d);
-  return {prompt:'Before dividing: how many DIGITS will the quotient have?',q:`${f(n)} ÷ ${d}`,ans:String(Q).length,rem:null,ph:'digits',
+  return {rule:'Compare the dividend with divisor × 10, × 100, × 1,000. That tells you how many digits.',prompt:'Before dividing: how many DIGITS will the quotient have?',q:`${f(n)} ÷ ${d}`,ans:String(Q).length,rem:null,ph:'digits',
    hint:`${d} × 10 = ${f(d*10)}   ${d} × 100 = ${f(d*100)}   ${d} × 1,000 = ${f(d*1000)}\nWhich two is ${f(n)} between?`}},
  // 5-8 word problems, interpret the remainder
  word(){const t=pick([0,1,2,3,4,5,6,7]);
@@ -182,7 +213,7 @@ const GEN={
   if(t===0){const per=R(24,52),n=per*R(4,9)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`${n} students go on a trip. Each bus holds ${per}. How many buses are needed?`,ans:a,rem:null,word:true,hint:`${n} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The leftover students still need a seat!`}}
   if(t===1){const per=R(12,36),n=per*R(12,30)+R(1,per-1);return {prompt:'Word problem: what does the remainder MEAN?',q:`${f(n)} stickers go into packs of ${per}. How many FULL packs?`,ans:Math.floor(n/per),rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Only full packs count.`}}
   if(t===2){const per=R(12,36),n=per*R(12,30)+R(1,per-1);return {prompt:'Word problem: what does the remainder MEAN?',q:`${f(n)} cards are shared by ${per} players equally. How many cards are LEFT OVER?`,ans:n%per,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The answer is the remainder.`}}
-  if(t===3){const per=R(15,40),n=per*R(5,25);return {prompt:'Word problem.',q:`A Minecraft farm makes ${f(n)} wheat in ${per} days, the same each day. How much wheat per day?`,ans:n/per,rem:null,word:true,hint:`${f(n)} ÷ ${per}. Estimate first: about ${f(Math.round(n/10)*10)} ÷ ${Math.round(per/10)*10}.`}}
+  if(t===3){const per=hardD(23,48),n=per*R(25,95);return {prompt:'Word problem.',q:`A Minecraft farm makes ${f(n)} wheat in ${per} days, the same each day. How much wheat per day?`,ans:n/per,rem:null,word:true,hint:`${f(n)} ÷ ${per}. Estimate first: about ${f(Math.round(n/10)*10)} ÷ ${Math.round(per/10)*10}.`}}
   if(t===4){const w=hardD(23,48),l=R(15,45);const a=w*l;return {prompt:'Word problem (area).',q:`A rectangle garden has an area of ${f(a)} square feet. It is ${w} feet wide. How long is it?`,ans:l,rem:null,word:true,hint:`Area = length × width, so length = ${f(a)} ÷ ${w}.`}}
   const per=hardD(23,48),n=per*R(20,60)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`You need to store ${f(n)} blocks. One chest holds ${per} blocks. How many chests do you need for ALL of them?`,ans:a,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Leftover blocks need one more chest.`}}
 };
@@ -201,11 +232,11 @@ const ladder=d=>[1,2,3,4,5,6,7,8,9].map(k=>f(k*d)).join(', ');
 function buildSteps(n,d){const ds=String(n).split('').map(Number);let i=0,cur=0;
  while(i<ds.length-1&&cur*10+ds[i]<d){cur=cur*10+ds[i];i++}
  cur=cur*10+ds[i];i++;const st=[];
- while(true){const qd=Math.floor(cur/d),pr=qd*d,rm=cur-pr;
-  st.push({k:'D',ask:`DIVIDE: How many ${d}s fit in ${f(cur)}?`,ans:qd,qd,hint:`Rule: biggest multiple of ${d} that is NOT more than ${f(cur)}.\nLadder: ${ladder(d)}\nIf ${d} doesn't fit at all, the answer is 0.`});
-  st.push({k:'M',ask:`MULTIPLY: ${qd} × ${d} = ?`,ans:pr,hint:`Rule: multiply the number you just wrote on top by ${d}.`});
-  st.push({k:'S',ask:`SUBTRACT: ${f(cur)} − ${f(pr)} = ?`,ans:rm,hint:`Rule: after you subtract, the answer must be LESS than ${d}.`});
-  if(i<ds.length){const nx=rm*10+ds[i];st.push({k:'B',ask:`BRING DOWN the next digit (${ds[i]}). What is the new number?`,ans:nx,hint:`Rule: write the ${ds[i]} right next to ${rm}.`});cur=nx;i++}
+ while(true){const qd=Math.floor(cur/d),pr=qd*d,rm=cur-pr;const e=i-1;
+  st.push({k:'D',e,pr,rm,ask:`DIVIDE: How many ${d}s fit in ${f(cur)}?`,ans:qd,qd,hint:`Rule: biggest multiple of ${d} that is NOT more than ${f(cur)}.\nLadder: ${ladder(d)}\nIf ${d} doesn't fit at all, the answer is 0.`});
+  st.push({k:'M',e,pr,ask:`MULTIPLY: ${qd} × ${d} = ?`,ans:pr,hint:`Rule: multiply the number you just wrote on top by ${d}.`});
+  st.push({k:'S',e,rm,ask:`SUBTRACT: ${f(cur)} − ${f(pr)} = ?`,ans:rm,hint:`Rule: after you subtract, the answer must be LESS than ${d}.`});
+  if(i<ds.length){const nx=rm*10+ds[i];st.push({k:'B',e,dg:ds[i],ask:`BRING DOWN the next digit (${ds[i]}). What is the new number?`,ans:nx,hint:`Rule: write the ${ds[i]} right next to ${rm}.`});cur=nx;i++}
   else break}
  const Q=Math.floor(n/d),Rm=n%d;
  st.push({k:'C',ask:`CHECK: ${f(Q)} × ${d} + ${Rm} = ?`,ans:n,hint:`Rule: quotient × divisor + remainder must equal ${f(n)}.`});
@@ -265,14 +296,64 @@ async function scenery(){
 async function setBoss(i){
  if(boss)scene.remove(boss);const b=BOSSES[i];
  const c=await makeChar(b.model,3.2);boss=c.o;bossMix=c.mix;bossClips=c.clips;
- boss.position.set(1.8,0,0);boss.rotation.y=-0.75;bossBase=boss.position.clone();scene.add(boss);
+ boss.position.set(1.8,0,0);boss.visible=false;boss.rotation.y=-0.75;bossBase=boss.position.clone();scene.add(boss);
  boss.traverse(m=>{if(m.isMesh){m.material=m.material.clone();m.material.emissive=new THREE.Color(b.tint);m.material.emissiveIntensity=.18}});
  playClip(bossMix,bossClips,'idle',false);
  aura.material.color.setHex(b.tint);
 }
 const aura=new THREE.Mesh(new THREE.RingGeometry(.9,1.25,40),new THREE.MeshBasicMaterial({color:0xff0000,transparent:true,opacity:.55,side:THREE.DoubleSide}));
-aura.rotation.x=-Math.PI/2;aura.position.set(1.8,.03,0);aura.scale.setScalar(1.4);scene.add(aura);
+aura.visible=false;aura.rotation.x=-Math.PI/2;aura.position.set(1.8,.03,0);aura.scale.setScalar(1.4);scene.add(aura);
 
+/* ---------- explore phase (before each level) ---------- */
+const keys={};let target=null;const items=[];const G={};let heroMoving=false;let vy=0,boost=0,portal=null,hasKey=false;
+addEventListener('keydown',e=>{if(!S.play)return;const k=e.key.toLowerCase();keys[k]=true;if(e.key.startsWith('Arrow')||k===' ')e.preventDefault();
+ if(k===' '&&hero.position.y<=0.001){vy=6.5;playClip(heroMix,heroClips,'jump',true);heroMoving=null}});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+const ray=new THREE.Raycaster();
+canvas.addEventListener('pointerdown',e=>{if(!S.play)return;const m=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(m,cam);const h=ray.intersectObject(ground);if(h[0])target=h[0].point.clone()});
+const PR=8.5;
+function spot(minR,maxR){const a=Math.random()*6.28,r=minR+Math.random()*(maxR-minR);return new THREE.Vector3(Math.cos(a)*r,0,Math.sin(a)*r)}
+async function explore(done){items.splice(0).forEach(o=>scene.remove(o));if(portal){scene.remove(portal.g);portal=null}S.play=true;S.busy=true;document.body.classList.add('playing');
+ for(const n of ['coin-gold','jewel','star','key'])if(!G[n])G[n]=await load('p/'+n+'.glb');
+ hero.visible=true;hero.position.set(0,0,3);hero.rotation.y=Math.PI;playClip(heroMix,heroClips,'idle',false);heroMoving=false;target=null;vy=0;boost=0;hasKey=false;
+ const add=(n,pos,sc,y)=>{const o=G[n].scene.clone();o.position.copy(pos);o.position.y=y;o.scale.setScalar(sc);shadowAll(o);o.userData={n,y};scene.add(o);items.push(o);return o};
+ for(let i=0;i<14;i++)add('coin-gold',spot(1,PR-.5),1.6,.5);
+ for(let i=0;i<3;i++)add('jewel',spot(4,PR-.5),1.8,.6);
+ add('star',spot(3,PR-1),1.8,.7);
+ add('key',spot(5.5,PR-.6),2,.6);
+ // portal
+ const pg=new THREE.Group();const ringM=new THREE.MeshStandardMaterial({color:0x555566,emissive:0x111122,metalness:.3,roughness:.5});
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.18,16,48),ringM);ring.position.y=1.3;pg.add(ring);
+ const fill=new THREE.Mesh(new THREE.CircleGeometry(1,40),new THREE.MeshBasicMaterial({color:0x223344,transparent:true,opacity:.5,side:THREE.DoubleSide}));fill.position.y=1.3;pg.add(fill);
+ const pos=spot(PR-1.6,PR-1.4);pg.position.copy(pos);pg.lookAt(0,0,0);scene.add(pg);portal={g:pg,ringM,fill};
+ let coinsGot=0,jew=0;S.onItem=n=>{
+  if(n==='coin-gold'){coinsGot++;if(coinsGot===14){S.mins++;stats();toast('ALL COINS! +1 min',1100)}}
+  if(n==='jewel'){jew++;S.gems++;S.mins++;stats();toast('💎 JEWEL! +1 min',900,'#7fd8ff')}
+  if(n==='star'){boost=6;toast('⭐ SPEED BOOST!',900)}
+  if(n==='key'){hasKey=true;ringM.color.setHex(0xffd23f);ringM.emissive.setHex(0xff9d00);fill.material.color.setHex(0x7a4dff);fill.material.opacity=.85;toast('🔑 KEY FOUND! Run to the PORTAL!',1500,'#ffd23f')}
+  hud()};
+ const b=BOSSES[S.lvl];
+ function hud(){$('ptxt').innerHTML=`<b>${b.lesson}</b> ARENA · 🪙 ${coinsGot}/14 · 💎 ${jew}/3 · ${hasKey?'🔑 ✔ → enter the <b>PORTAL</b>!':'find the 🔑 key'}`}
+ hud();toast(`${b.lesson} ARENA: find the key!`,1500,'#3fdc7a');
+ const t0=performance.now();
+ S.endExplore=()=>{S.play=false;items.splice(0).forEach(o=>scene.remove(o));scene.remove(pg);portal=null;hero.visible=false;hero.position.y=0;document.body.classList.remove('playing');for(const k in keys)keys[k]=false;S.busy=false;S.endExplore=null;toast(`${b.name}!`,1200);done()};
+ S.exploreT0=t0}
+function playTick(dt,t){if(!S.play||!hero)return;let dx=0,dz=0;
+ if(keys['arrowleft']||keys['a'])dx-=1;if(keys['arrowright']||keys['d'])dx+=1;if(keys['arrowup']||keys['w'])dz-=1;if(keys['arrowdown']||keys['s'])dz+=1;
+ if(dx||dz)target=null;else if(target){const v=target.clone().sub(hero.position);v.y=0;if(v.length()>.15){dx=v.x;dz=v.z}else target=null}
+ const mv=Math.hypot(dx,dz)>0;boost=Math.max(0,boost-dt);const sp=boost>0?7.5:4.5;
+ if(mv){const l=Math.hypot(dx,dz);dx/=l;dz/=l;hero.position.x+=dx*sp*dt;hero.position.z+=dz*sp*dt;
+  const r=Math.hypot(hero.position.x,hero.position.z);if(r>PR){hero.position.x*=PR/r;hero.position.z*=PR/r}
+  hero.rotation.y=Math.atan2(dx,dz)}
+ vy-=18*dt;hero.position.y=Math.max(0,hero.position.y+vy*dt);if(hero.position.y===0)vy=0;
+ if(hero.position.y===0&&mv!==heroMoving){heroMoving=mv;playClip(heroMix,heroClips,mv?'sprint':'idle',false)}
+ if(boost>0&&Math.random()<.5)burst(hero.position.clone().add(new THREE.Vector3(0,.3,0)),0xffd23f,1,1.5);
+ const hp=new THREE.Vector3(hero.position.x,hero.position.y+.5,hero.position.z);
+ for(let i=items.length-1;i>=0;i--){const c=items[i];c.rotation.y+=dt*(c.userData.n==='key'?2:3);c.position.y=c.userData.y+Math.sin(t*3+i)*.15;
+  if(c.position.distanceTo(hp)<.85){scene.remove(c);items.splice(i,1);play('loot');burst(c.position.clone(),c.userData.n==='jewel'?0x7fd8ff:0xffd23f,c.userData.n==='key'?60:25,4);S.onItem(c.userData.n)}}
+ if(portal){portal.g.children[0].rotation.z+=dt*(hasKey?3:.4);portal.fill.rotation.z-=dt*2;
+  if(hasKey){if(Math.random()<.4)burst(portal.g.position.clone().add(new THREE.Vector3(0,1.3,0)),0x9f7bff,1,2);
+   const d=Math.hypot(hero.position.x-portal.g.position.x,hero.position.z-portal.g.position.z);if(d<1.1&&S.endExplore){flash('#c8b6ff');play('win');S.endExplore()}}}}
 /* particles */
 const parts=[];
 function burst(pos,color,n=40,speed=5){
@@ -285,12 +366,14 @@ function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);c
 addEventListener('resize',resize);
 const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);const t=clock.elapsedTime;
- actors.forEach(m=>m.update(dt));
+ actors.forEach(m=>m.update(dt));playTick(dt,t);
  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.v.y-=12*dt;p.m.position.addScaledVector(p.v,dt);p.m.rotation.x+=dt*8;p.life-=dt*1.1;p.m.scale.setScalar(Math.max(p.life,0.01));
   if(p.life<=0||p.m.position.y<0){scene.remove(p.m);parts.splice(i,1)}}
  aura.rotation.z=t*.8;aura.material.opacity=.35+.2*Math.sin(t*4);
- const por=innerWidth/innerHeight<1;const far=por?10:7.2;const ox=innerWidth>900?2.1:0;
- cam.position.x=ox+Math.sin(t*.25)*.4+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(ox,por?-1.6:.3,0);
+ const por=innerWidth/innerHeight<1;
+ if(S.play&&hero){const want=new THREE.Vector3(hero.position.x,por?7:5,hero.position.z+(por?9:7.5));cam.position.lerp(want,Math.min(1,dt*4));cam.lookAt(hero.position.x,.6,hero.position.z-1)}
+ else{const far=por?10:7.2;const ox=innerWidth>900?2.1:0;
+ cam.position.x=ox+Math.sin(t*.25)*.4+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(ox,por?-1.6:.3,0);}
  shake*=.88;renderer.render(scene,cam)}
 
 /* ---------- screen fx ---------- */
@@ -308,14 +391,38 @@ function drawMap(){const m=$('map');m.innerHTML='';BOSSES.forEach((b,i)=>{const 
  bt.className=(S.done.has(i)?'done ':'')+(i===S.lvl?'cur':'');bt.title=b.name+': '+b.sub;bt.onclick=()=>startLevel(i);m.appendChild(bt)})}
 function stats(){$('mins').textContent=S.mins;$('gems').textContent=S.gems;$('streak').textContent=S.streak;save()}
 function newQ(){S.cur=GEN[BOSSES[S.lvl].gen]();S.tries=0;const c=S.cur;$('prompt').textContent=c.prompt;$('q').textContent=c.q;$('hint').textContent='';
- const box=$('inputs');box.innerHTML='';$('rules').style.display='none';$('board').style.display='none';
+ const box=$('inputs');box.innerHTML='';$('rules').style.display='none';$('board').style.display='none';document.body.classList.remove('stepmode');
  if(c.steps){S.st=buildSteps(c.n,c.d);S.si=0;S.qs='';S.stTries=0;$('prompt').textContent='Long division, one move at a time. Does McDonald\'s Sell Nuggets? Then CHECK!';renderStep();return}
  const mk=(id,ph)=>{const i=document.createElement('input');i.id=id;i.placeholder=ph;i.inputMode='numeric';i.autocomplete='off';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(id==='a'&&$('r')&&!$('r').value&&$('a').value)$('r').focus();else submit()}};return i};
+ document.body.classList.add('stepmode');$('board').style.display='block';$('board').innerHTML=staticBoard(c);if(c.word)$('q').textContent='';
+ const rl=$('rules');rl.style.display='flex';rl.innerHTML=`<div class="rulecard"><b>RULE</b><br>${c.rule||(c.word?WORD_RULE:'Divide. Multiply. Subtract. Bring down. Check!')}</div>`;
  if(c.rem!==null){box.append(lbl('Q'),mk('a','quotient'),lbl('R'),mk('r','remainder'))}else box.append(mk('a',c.ph||(c.est?'estimate':'answer')));
  setTimeout(()=>$('a').focus(),50)}
+const WORD_RULE="Divide. Then ask what the remainder MEANS: round UP (everyone needs room), DROP it (only full groups), or the remainder IS the answer.";
+function staticBoard(c){const m=c.q.replace(/,/g,'').match(/^(\d+) ÷ (\d+)( ≈ \?)?$/);
+ if(m){const ds=m[1].split('');return `<table class="ld"><tr><td class="dv"></td><td></td>${ds.map((_,j)=>`<td class="q${j===ds.length-1?' hot':''}">${j===ds.length-1?'?':''}</td>`).join('')}</tr><tr><td class="dv">${m[2]}</td><td class="br">)</td>${ds.map(v=>`<td class="dd">${v}</td>`).join('')}</tr></table><div class="chk" style="color:#cfe9d8">Work it on paper too, then hold it up!</div>`}
+ return `<div class="chalk">${c.q}</div>`}
+function boardHTML(){const n=S.cur.n,d=S.cur.d;const ds=String(n).split('');const L=ds.length;
+ const qrow=Array(L).fill(''),qhot=Array(L).fill(false);const rows=[];let arrow=-1;
+ const place=(str,end)=>{const c=Array(L).fill('');const st=end-str.length+1;for(let j=0;j<str.length;j++)c[st+j]=str[j];return {c,st}};
+ for(let i=0;i<=S.si&&i<S.st.length;i++){const x=S.st[i],pend=i===S.si;
+  if(x.k==='D'){qrow[x.e]=pend?'?':String(x.qd);qhot[x.e]=pend}
+  else if(x.k==='M'){const p=place(pend?'?':String(x.pr),x.e);rows.push({...p,minus:true,ul:true,hot:pend,from:x.e-String(x.pr).length+1,to:x.e})}
+  else if(x.k==='S'){const p=place(pend?'?':String(x.rm),x.e);rows.push({...p,hot:pend})}
+  else if(x.k==='B'){const last=rows[rows.length-1];last.c[x.e+1]=pend?'?':x.dg;last.hotCol=pend?x.e+1:-1;if(pend)arrow=x.e+1;else last.down=x.e+1}}
+ const td=(v,cls)=>`<td class="${cls||''}">${v===''?'':v}</td>`;
+ let h='<table class="ld"><tr><td class="dv"></td><td></td>'+qrow.map((v,j)=>td(v,'q'+(qhot[j]?' hot':''))).join('')+'</tr>';
+ h+=`<tr><td class="dv">${d}</td><td class="br">)</td>`+ds.map((v,j)=>td(v,'dd'+(j===arrow?' arr':''))).join('')+'</tr>';
+ rows.forEach(r=>{let g='';h+='<tr><td class="dv"></td>';
+  const minusCol=r.minus?r.st-1:-9;h+=td(minusCol===-1?'−':'','ms');
+  r.c.forEach((v,j)=>{let cls='';if(j===minusCol)v='−',cls='ms';if(r.ul&&j>=Math.min(r.from,r.st)&&j<=r.to)cls+=' ul';
+   if(r.hot&&v==='?')cls+=' hot';if(r.hotCol===j)cls+=' hot';if(r.down===j)cls+=' bd';h+=td(v,cls)});h+='</tr>'});
+ h+='</table>';
+ if(S.si>=S.st.length-1&&S.st[S.st.length-1].k==='C'){h+=`<div class="chk">✓ CHECK: ${f(Math.floor(n/d))} × ${d} + ${n%d} = ${S.si>=S.st.length?f(n):'?'}</div>`}
+ return h}
 function renderStep(){const st=S.st[S.si];const r=$('rules');r.style.display='flex';
  r.innerHTML=['D','M','S','B','C'].map(k=>`<span class="${k===st.k?'on':''}">${RULES[k]}</span>`).join('');
- const b=$('board');b.style.display='block';b.textContent='Quotient so far: '+(S.qs?Number(S.qs).toLocaleString('en-US'):'?')+'  (÷ '+S.cur.d+')';
+ const b=$('board');b.style.display='block';b.innerHTML=boardHTML();document.body.classList.add('stepmode');
  const box=$('inputs');box.innerHTML='';const ask=document.createElement('div');ask.id='stepAsk';ask.textContent=st.ask;
  const i=document.createElement('input');i.id='a';i.inputMode='numeric';i.autocomplete='off';i.placeholder='?';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit()}};
  box.style.flexDirection='column';box.append(ask,i);$('hint').textContent='';setTimeout(()=>i.focus(),30)}
@@ -331,7 +438,7 @@ const lbl=t=>{const l=document.createElement('label');l.textContent=t;return l};
 const num=v=>v===''?NaN:Number(String(v).replace(/[, ]/g,''));
 async function startLevel(i){S.lvl=i;S.hp=BOSSES[i].hp;S.busy=true;const b=BOSSES[i];
  $('bname').textContent=`${b.lesson} · ${b.name}`;$('bsub').textContent=b.sub;$('hp').style.width='0%';drawMap();
- await setBoss(i);S.busy=false;toast(b.name+'!',1200,'#'+b.tint.toString(16).padStart(6,'0'));newQ()}
+ await setBoss(i);S.busy=false;if(S.endExplore)S.endExplore=null;explore(newQ)}
 function submit(){if(S.busy||!S.cur)return;const c=S.cur;if(c.steps)return stepSubmit();const a=num($('a').value);const r=$('r')?num($('r').value||'0'):null;
  if(isNaN(a)){$('a').focus();return}
  let ok;if(c.est){ok=Math.abs(a-c.ans)<=Math.max(1,c.ans*.15)||Math.abs(a-c.exact)<=Math.max(1,c.exact*.15)}else ok=a===c.ans&&(c.rem===null||r===c.rem);
@@ -357,16 +464,17 @@ function win(){playClip(bossMix,bossClips,'emote-yes',true);play('win');S.done.a
   $('chestText').innerHTML=`You unlocked the gate of <b>${BOSSES[S.lvl].name}</b> (lesson ${BOSSES[S.lvl].lesson}).<br>Free time banked: <b style="color:#ffd23f">${S.mins} min</b>`+
    (S.done.size===8?'<br><br>🏆 ALL 8 GATES UNLOCKED. You are ready for Thursday.':'');
   $('chestGo').textContent='NEXT GATE ▶';$('chest').style.display='flex'},1700)}
+$('skipEx').onclick=()=>{if(S.endExplore)S.endExplore()};
 $('chestGo').onclick=()=>{$('chest').style.display='none';const k=ORDER.indexOf(S.lvl);const nx=ORDER.slice(k+1).find(i=>!S.done.has(i));startLevel(nx===undefined?ORDER[(k+1)%8]:nx)};
 $('go').onclick=submit;
 $('work').onclick=()=>{S.mins++;stats();play('ok');toast('📝 WORK SHOWN +1',800,'#3fdc7a')};
-addEventListener('keydown',e=>{if((e.key==='w'||e.key==='W')&&document.activeElement.tagName!=='INPUT')$('work').click()});
+addEventListener('keydown',e=>{if(!S.play&&(e.key==='w'||e.key==='W')&&document.activeElement.tagName!=='INPUT')$('work').click()});
 
 /* ---------- boot ---------- */
 (async()=>{try{
  resize();loop();
  $('load').textContent='Loading the arena…';await scenery();
- const h=await makeChar('character-knight',2.4);hero=h.o;heroMix=h.mix;heroClips=h.clips;hero.position.set(-1.8,0,0);hero.rotation.y=0.75;scene.add(hero);playClip(heroMix,heroClips,'idle',false);
+ const h=await makeChar('character-knight',2.4);hero=h.o;heroMix=h.mix;heroClips=h.clips;hero.position.set(-1.8,0,0);hero.visible=false;hero.rotation.y=0.75;scene.add(hero);playClip(heroMix,heroClips,'idle',false);
  await Promise.all(BOSSES.map(b=>load('m/'+b.model+'.glb')));
  $('load').textContent='';$('startBtn').disabled=false;$('startBtn').textContent='ENTER THE ARENA ⚔️';
 }catch(e){$('load').textContent='Load error: '+e.message;console.error(e)}})();

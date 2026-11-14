@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Topic 5 Gate Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#ffd23f;--red:#ff4d5a;--ink:#0d0f1a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0d0f1a;font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff}
+#c{position:fixed;inset:0;display:block}
+.hud{position:fixed;left:0;right:0;pointer-events:none}
+#top{top:10px;display:flex;justify-content:space-between;align-items:flex-start;padding:0 14px;gap:10px}
+.panel{background:rgba(10,12,28,.72);border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:8px 12px;backdrop-filter:blur(4px);pointer-events:auto}
+#map{display:flex;gap:6px;flex-wrap:wrap}
+#map button{font:inherit;font-weight:700;font-size:14px;border:2px solid #444a6a;background:#1b1f3a;color:#cfd3ff;border-radius:10px;padding:6px 9px;cursor:pointer}
+#map button.done{background:#1f6b3a;border-color:#3fdc7a;color:#fff}
+#map button.cur{background:#7a4dff;border-color:#c8b6ff;color:#fff}
+#stats{display:flex;gap:14px;font-weight:800;font-size:18px;align-items:center}
+#stats b{color:var(--gold)}
+#boss{position:fixed;top:64px;left:50%;transform:translateX(-50%);width:min(520px,90vw);text-align:center;pointer-events:none}
+#bname{font-size:26px;font-weight:900;text-shadow:0 3px 0 #000;letter-spacing:.5px}
+#bsub{font-size:14px;opacity:.85;margin-bottom:4px}
+#hpbar{height:20px;border-radius:10px;background:#2a0d12;border:2px solid #000;overflow:hidden}
+#hp{height:100%;width:0%;background:linear-gradient(90deg,#ff2e4d,#ff8a3d);transition:width .35s}
+#bottom{bottom:14px;display:flex;justify-content:center;padding:0 12px}
+#qbox{width:min(760px,96vw);text-align:center;pointer-events:auto}
+#prompt{font-size:16px;opacity:.9;margin-bottom:4px}
+#q{font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:1px;text-shadow:0 3px 0 #000;margin:2px 0 8px}
+#inputs{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+#inputs input{font:inherit;font-size:28px;font-weight:800;width:170px;padding:8px 12px;border-radius:12px;border:3px solid #6c7bff;background:#0b0d1f;color:#fff;text-align:center;outline:none}
+#inputs input:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,210,63,.25)}
+#inputs label{font-size:22px;font-weight:900}
+.btn{font:inherit;font-weight:900;font-size:22px;padding:10px 20px;border-radius:12px;border:3px solid #000;cursor:pointer;background:var(--gold);color:#1a1200;box-shadow:0 4px 0 #000}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.btn.sm{font-size:15px;padding:6px 10px;background:#2f355e;color:#fff;border-color:#000}
+#hint{min-height:22px;margin-top:8px;font-size:17px;color:#bfe3ff;white-space:pre-line}
+#toast{position:fixed;top:42%;left:50%;transform:translate(-50%,-50%) scale(.6);font-size:clamp(34px,7vw,72px);font-weight:900;text-shadow:0 5px 0 #000,0 0 30px rgba(255,210,63,.6);opacity:0;pointer-events:none;transition:all .25s;text-align:center;color:var(--gold)}
+#toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.dmg{position:fixed;font-weight:900;font-size:40px;color:#fff;text-shadow:0 3px 0 #000;pointer-events:none;transition:transform .9s ease-out,opacity .9s;z-index:5}
+.dmg.crit{color:var(--gold);font-size:56px}
+#chest{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:10}
+#chest .panel{text-align:center;padding:24px 30px;max-width:92vw}
+#chest h2{font-size:34px;margin:4px 0 10px;color:var(--gold)}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
+#start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#2b1f6b,#0d0f1a 70%);z-index:20}
+#start .panel{text-align:center;padding:28px 34px;max-width:620px}
+#start h1{font-size:44px;margin:0 0 6px;color:var(--gold);text-shadow:0 4px 0 #000}
+#load{opacity:.8;margin-top:10px}
+@media (max-width:600px){#boss{top:150px}#bname{font-size:22px}#inputs input{width:110px!important;font-size:22px!important}#qbox{padding:8px 10px}#q{font-size:30px}#prompt{font-size:13px}.btn{font-size:20px;padding:8px 14px}#map button{font-size:12px;padding:4px 6px}#top{flex-direction:column;align-items:stretch}#stats{justify-content:space-between}#stats{font-size:14px}#bname{font-size:20px}#inputs input{width:120px;font-size:22px}}
+
+html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-spacing:.4px}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
+.panel{background:linear-gradient(180deg,rgba(40,28,10,.82),rgba(18,12,4,.88));border:3px solid #c9932e;box-shadow:0 0 0 3px #3a2508,0 8px 24px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,220,140,.25);border-radius:16px}
+#map button{font-family:inherit;font-weight:400;font-size:16px;background:linear-gradient(180deg,#4a3a20,#2a1f0e);border:2px solid #8a6a2a;color:#f3dca6;box-shadow:0 3px 0 #000}
+#map button.cur{background:linear-gradient(180deg,#ffcc33,#d18a00);border-color:#fff3b0;color:#2a1600}
+#map button.done{background:linear-gradient(180deg,#4bd06b,#1d7a37);border-color:#b6ffc8}
+#stats{font-weight:400;font-size:20px}
+#boss{top:70px}
+#bname{font-size:38px;font-weight:400;color:#fff;text-shadow:0 4px 0 #000,0 0 18px rgba(80,200,255,.7);-webkit-text-stroke:1px #000}
+#bname{line-height:1.1;margin-bottom:4px}
+#bsub{font-size:16px;color:#ffe2a8;text-shadow:0 2px 0 #000;margin-bottom:6px}
+#hint{min-height:0}#hint:empty{display:none}
+#hpbar{height:26px;border:3px solid #000;box-shadow:0 0 0 2px #c9932e;border-radius:14px;background:#0b1a2a}
+#hp{background:linear-gradient(180deg,#9ff3ff,#22b8ff 60%,#0a5fb0);box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
+#qbox{width:min(640px,94vw);padding:10px 16px 12px}
+#prompt{font-size:15px;color:#ffe2a8;opacity:1}
+#q{font-size:clamp(30px,5vw,50px);font-weight:400;color:#fff;-webkit-text-stroke:1px #000;text-shadow:0 4px 0 #000;margin:0 0 8px}
+#inputs input{font-family:inherit;font-weight:400;font-size:30px;border:3px solid #8a6a2a;background:#120c03;color:#ffe27a;box-shadow:inset 0 3px 8px rgba(0,0,0,.7)}
+#inputs input:focus{border-color:#ffd23f;box-shadow:0 0 0 4px rgba(255,210,63,.35),inset 0 3px 8px rgba(0,0,0,.7)}
+#inputs label{font-weight:400;color:#ffd23f;text-shadow:0 2px 0 #000}
+.btn{font-family:inherit;font-weight:400;font-size:24px;background:linear-gradient(180deg,#ffe066,#f0a500);border:3px solid #000;box-shadow:0 5px 0 #6b3d00,0 8px 14px rgba(0,0,0,.4);text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.btn.sm{font-size:16px;background:linear-gradient(180deg,#3f8f4f,#1f5a2c);color:#fff;box-shadow:0 4px 0 #0b2a12;text-shadow:0 1px 0 #000}
+#hint{font-size:17px;color:#bfe9ff;text-shadow:0 1px 0 #000}
+#toast{font-weight:400;-webkit-text-stroke:2px #000}
+.dmg{font-weight:400;-webkit-text-stroke:2px #000;font-size:48px}
+.dmg.crit{font-size:68px}
+#start h1{font-weight:400;font-size:54px;-webkit-text-stroke:2px #000}
+#chest h2{font-weight:400;-webkit-text-stroke:1px #000}
+#rules{display:none;gap:6px;justify-content:center;flex-wrap:wrap;margin:2px 0 6px}
+#rules span{padding:3px 9px;border-radius:9px;background:#2a1f0e;border:2px solid #6b5020;color:#bfa36a;font-size:15px}
+#rules span.on{background:linear-gradient(180deg,#ffe066,#f0a500);color:#2a1600;border-color:#fff3b0;transform:scale(1.12)}
+#rules span.ok{background:#1d7a37;border-color:#4bd06b;color:#fff}
+#board{display:none;font-size:18px;color:#ffe27a;margin-bottom:6px;text-shadow:0 2px 0 #000;white-space:pre-line}
+#stepAsk{font-size:22px;color:#fff;margin:4px 0 8px;text-shadow:0 2px 0 #000}
+@media (min-width:901px){
+ #bottom{top:120px;bottom:auto;right:18px;left:auto;justify-content:flex-end}
+ #qbox{width:420px}
+ #boss{left:calc(50% - 220px)}
+}
+@media (max-width:900px){#qbox{max-height:48vh;overflow:auto}}
+
+body.stepmode #boss{top:60px}body.stepmode #bsub{display:none}
+body.stepmode #bottom{top:150px;bottom:14px;left:0;right:0;justify-content:center;align-items:flex-start}
+body.stepmode #qbox{width:min(1120px,96vw);display:grid;grid-template-columns:1.25fr 1fr;grid-template-areas:'p p' 'q q' 'b r' 'b i' 'b h';column-gap:22px;align-items:start}
+body.stepmode #prompt{grid-area:p}body.stepmode #q{grid-area:q;font-size:34px;margin:0 0 6px}
+body.stepmode #board{grid-area:b;display:block}body.stepmode #rules{grid-area:r;flex-direction:column;align-items:stretch}
+body.stepmode #inputs{grid-area:i}body.stepmode #hint{grid-area:h}
+body.stepmode #qbox>div:nth-last-child(2){grid-column:2}
+body.stepmode #rules span{font-size:20px;padding:6px 10px;text-align:left}
+#board{background:#163828;border:6px solid #6b4a1e;border-radius:12px;padding:14px 10px;box-shadow:inset 0 0 30px rgba(0,0,0,.6);min-height:300px}
+table.ld{border-collapse:collapse;margin:0 auto;font-size:clamp(28px,3.4vw,44px);color:#f4f7ef;font-variant-numeric:tabular-nums}
+table.ld td{width:1.05em;height:1.25em;text-align:center;padding:0;line-height:1.2}
+table.ld td.dv{width:auto;padding-right:2px;color:#9fe0ff;text-align:right}
+table.ld td.br{color:#fff;font-size:1.15em;width:.5em}
+table.ld td.dd{border-top:4px solid #fff}
+table.ld td.q{color:#ffe27a}
+table.ld td.ul{border-bottom:4px solid #fff}
+table.ld td.ms{color:#ff9f9f}
+table.ld td.hot{background:rgba(255,210,63,.25);outline:3px solid #ffd23f;border-radius:6px;color:#ffd23f;animation:pulse 1s infinite}
+table.ld td.arr{color:#ffd23f;text-decoration:underline;text-decoration-thickness:4px}
+table.ld td.bd{color:#7fe3a0}
+@keyframes pulse{50%{background:rgba(255,210,63,.5)}}
+.chk{margin-top:10px;font-size:22px;color:#7fe3a0;text-align:center}
+#stepAsk{font-size:24px}
+#playbar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:none;font-size:24px;padding:10px 18px;border-radius:14px;background:linear-gradient(180deg,rgba(40,28,10,.85),rgba(18,12,4,.9));border:3px solid #c9932e;color:#fff;text-shadow:0 2px 0 #000;z-index:6}
+#playbar b{color:#ffd23f}
+body.playing #bottom,body.playing #boss{display:none!important}
+body.playing #playbar{display:block}
+.chalk{font-size:clamp(22px,2.4vw,30px);color:#f4f7ef;line-height:1.35;padding:6px 10px;text-align:left}
+.rulecard{background:linear-gradient(180deg,#ffe066,#f0a500);color:#2a1600;border:3px solid #000;border-radius:12px;padding:10px 12px;font-size:19px;line-height:1.3;box-shadow:0 4px 0 #6b3d00}
+.rulecard b{font-size:22px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vig"></div><div id="flash"></div>
+<div class="hud" id="top">
+  <div class="panel" id="map"></div>
+  <div class="panel" id="stats">
+    <span>⏱ <b id="mins">0</b> free min</span>
+    <span>💎 <b id="gems">0</b></span>
+    <span>🔥 <b id="streak">0</b></span>
+    <button class="btn sm" id="snd">🔊</button>
+  </div>
+</div>
+<div id="boss"><div id="bname"></div><div id="bsub"></div><div id="hpbar"><div id="hp"></div></div></div>
+<div class="hud" id="bottom"><div class="panel" id="qbox">
+  <div id="prompt"></div><div id="q"></div>
+  <div id="rules"></div><div id="board"></div>
+  <div id="inputs"></div>
+  <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+    <button class="btn" id="go">POWER UP ⚡</button>
+    <button class="btn sm" id="work" title="Tutor: press when he shows his work on paper (W)">📝 Work shown +1</button>
+  </div>
+  <div id="hint"></div>
+</div></div>
+<div id="toast"></div><div id="playbar"><span id="ptxt"></span><div style="font-size:15px;opacity:.85;margin-top:2px">Move: arrows / WASD / click · Jump: SPACE <button class="btn sm" id="skipEx" style="margin-left:8px">skip to questions ▶</button></div></div>
+<div id="chest"><div class="panel"><div id="chestIcon" style="font-size:80px">🧰</div><h2 id="chestTitle"></h2><div id="chestText" style="font-size:20px"></div><br><button class="btn" id="chestGo">NEXT GATE ▶</button></div></div>
+<div id="start"><div class="panel">
+  <h1>TOPIC 5 GATE QUEST</h1>
+  <div style="font-size:19px;line-height:1.5">8 magic gates. One for each lesson on Thursday's test.<br>Every right answer charges the gate. Every right answer = <b style="color:#ffd23f">+1 free minute</b>.<br>3 in a row = <b style="color:#ffd23f">SUPER CHARGE</b>. Unlock a gate = loot chest.</div><br>
+  <button class="btn" id="startBtn" disabled>LOADING…</button>
+  <div id="load"></div>
+</div></div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+/* ---------- math content (Savvas CC Grade 5, Topic 5 lessons 5-1 to 5-8) ---------- */
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const f=n=>n.toLocaleString('en-US');
+const hardD=(lo,hi)=>{let d;do{d=R(lo,hi)}while(Math.random()<.65&&d%10<6);return d};
+const zeroQ3=()=>{const h=R(1,4),o=R(1,9);return Math.random()<.55?h*100+o:R(101,409)};
+const GEN={
+ // 5-1 patterns and mental math
+ pattern(){let q,d;if(Math.random()<.45){const pr=pick([[4,5],[6,5],[8,5],[2,5],[4,5],[8,5]]);d=pr[1]*10*pick([1,1,10]);q=pr[0]*pick([10,100]);}else{q=R(4,9)*pick([10,100]);d=R(4,9)*10;}const n=q*d;
+  return {rule:'Cross out the SAME number of zeros from both numbers. Do the basic fact. Careful: 40 ÷ 5 = 8 already used a zero!',prompt:'Use patterns. Cross out zeros, then use a basic fact.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
+   hint:`Think: ${d} × ? = ${f(n)}\nCross out one zero from each: ${f(n/10)} ÷ ${d/10}`}},
+ // 5-2 estimate with compatible numbers
+ estimate(){const d0=R(4,9)*10,q0=R(3,9)*pick([10,100]);const C=d0*q0;let n;do{n=C+R(-Math.round(C*.04),Math.round(C*.04));}while(n===C||n<10);
+  let d;do{d=d0+R(-2,2);}while(d===d0);
+  return {rule:'Change BOTH numbers to friendly numbers that divide easily (a basic fact), then divide.',prompt:'ESTIMATE with friendly (compatible) numbers.',q:`${f(n)} ÷ ${d} ≈ ?`,ans:q0,exact:n/d,rem:null,est:true,
+   hint:`Friendly numbers: ${f(n)} is close to ${f(C)}, and ${d} is close to ${d0}.\n${f(C)} ÷ ${d0} = ?`}},
+ // 5-3 models (2-digit quotient, area model)
+ model(){const d=R(13,29),q=R(14,19);const n=d*q;
+  return {rule:'Take 10 groups first. Subtract. See how many groups are left. ADD them to 10.',prompt:'Use an area model: take 10 groups first, then the rest.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
+   hint:`10 × ${d} = ${d*10}.  ${n} − ${d*10} = ${n-d*10}.\nHow many ${d}s in ${n-d*10}? Add it to 10.`}},
+ // 5-4 partial quotients
+ partial(){const d=hardD(23,48),q=R(31,89);const n=d*q;const t=Math.floor(q/10)*10;
+  return {rule:'Take a big friendly chunk (×10, ×20, ×30…). Subtract. Repeat. Then ADD all the chunks.',prompt:'Partial quotients: take a big friendly chunk, subtract, repeat, then add the chunks.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
+   hint:`Try ${t} × ${d} = ${f(t*d)}.  ${f(n)} − ${f(t*d)} = ${f(n-t*d)}.\nHow many ${d}s in ${f(n-t*d)}? Then add.`}},
+ // 5-5 standard algorithm, 3-digit by 2-digit, remainders
+ algo3(){let d,q,r,n;do{d=hardD(23,89);q=Math.random()<.3?R(1,3)*10:R(12,39);r=Math.random()<.25?0:R(1,d-1);n=d*q+r;}while(n>999||n<400);
+  return {prompt:'Divide. Multiply. Subtract. Bring down. (Remainder can be 0.)',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,
+   hint:`Multiples ladder: ${d}, ${d*2}, ${d*3}, ${d*4}, ${d*5} …\nCheck: ${d} × quotient + remainder = ${f(n)}`}},
+ // 5-6 4-digit by 2-digit
+ algo4(){let d,q,r,n;do{d=hardD(23,89);q=zeroQ3();r=Math.random()<.25?0:R(1,d-1);n=d*q+r;}while(n>9999||n<2000);
+  return {prompt:'Big one: 4-digit ÷ 2-digit. Estimate first, then divide.',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,
+   hint:`Estimate: about ${f(Math.round(n/100)*100)} ÷ ${Math.round(d/10)*10||10}.\nLadder: ${d}, ${d*2}, ${d*3} … ${d*9}`}},
+ // 5-7 choose a strategy (mix)
+ mix(){return GEN[pick(['algo4','algo4','algo3','detective','missing','place','detective'])]();},
+ // test traps
+ detective(){let d,q,r,n;do{d=hardD(23,39);q=R(1,2)*100+R(1,9);r=R(1,d-1);n=d*q+r}while(n>9999);
+  const wrong=Number(String(q).replace('0',''));
+  return {rule:"Check: quotient × divisor + remainder = dividend. If the divisor doesn't fit after you bring down, write 0.",prompt:'ERROR DETECTIVE: find the mistake.',q:`Max says ${f(n)} ÷ ${d} = ${wrong} R${r}`,ans:q,rem:null,
+   ph:'correct quotient',hint:`Check Max: ${wrong} × ${d} + ${r} = ${f(wrong*d+r)}, not ${f(n)}.\nRule: if ${d} doesn't fit after you bring down, write 0 in the quotient!`}},
+ missing(){const d=hardD(23,68),q=R(41,189),r=R(1,d-1);
+  return {rule:'dividend = quotient × divisor + remainder.',prompt:'Work BACKWARD.',q:`? ÷ ${d} = ${q} R${r}`,ans:d*q+r,rem:null,ph:'dividend',
+   hint:`Rule: quotient × divisor + remainder = dividend.\n${q} × ${d} + ${r} = ?`}},
+ place(){const d=hardD(23,89);const q=R(12,99)*pick([1,1,10]);const n=d*q+R(0,d-1);const Q=Math.floor(n/d);
+  return {rule:'Compare the dividend with divisor × 10, × 100, × 1,000. That tells you how many digits.',prompt:'Before dividing: how many DIGITS will the quotient have?',q:`${f(n)} ÷ ${d}`,ans:String(Q).length,rem:null,ph:'digits',
+   hint:`${d} × 10 = ${f(d*10)}   ${d} × 100 = ${f(d*100)}   ${d} × 1,000 = ${f(d*1000)}\nWhich two is ${f(n)} between?`}},
+ // 5-8 word problems, interpret the remainder
+ word(){const t=pick([0,1,2,3,4,5,6,7]);
+  if(t===6){const per=hardD(23,48),n=per*R(20,80)+R(1,per-1);const full=Math.floor(n/per);return {prompt:'2-step word problem.',q:`${f(n)} pencils go in boxes of ${per}. Full boxes sell for $3 each. How many dollars for all the FULL boxes?`,ans:full*3,rem:null,word:true,hint:`Step 1: ${f(n)} ÷ ${per} = ${full} R${n%per} (only full boxes).\nStep 2: ${full} × $3.`}}
+  if(t===7){const per=hardD(24,36),k=R(30,90),extra=R(1,per-1),n=per*k+extra;return {prompt:'2-step word problem.',q:`${f(n)} fans need seats. Each row has ${per} seats. Every row is filled except the last. How many fans are in the LAST row?`,ans:extra,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${k} R${extra}. The last row holds the remainder.`}}
+  if(t===0){const per=R(24,52),n=per*R(4,9)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`${n} students go on a trip. Each bus holds ${per}. How many buses are needed?`,ans:a,rem:null,word:true,hint:`${n} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The leftover students still need a seat!`}}
+  if(t===1){const per=R(12,36),n=per*R(12,30)+R(1,per-1);return {prompt:'Word problem: what does the remainder MEAN?',q:`${f(n)} stickers go into packs of ${per}. How many FULL packs?`,ans:Math.floor(n/per),rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Only full packs count.`}}
+  if(t===2){const per=R(12,36),n=per*R(12,30)+R(1,per-1);return {prompt:'Word problem: what does the remainder MEAN?',q:`${f(n)} cards are shared by ${per} players equally. How many cards are LEFT OVER?`,ans:n%per,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The answer is the remainder.`}}
+  if(t===3){const per=hardD(23,48),n=per*R(25,95);return {prompt:'Word problem.',q:`A Minecraft farm makes ${f(n)} wheat in ${per} days, the same each day. How much wheat per day?`,ans:n/per,rem:null,word:true,hint:`${f(n)} ÷ ${per}. Estimate first: about ${f(Math.round(n/10)*10)} ÷ ${Math.round(per/10)*10}.`}}
+  if(t===4){const w=hardD(23,48),l=R(15,45);const a=w*l;return {prompt:'Word problem (area).',q:`A rectangle garden has an area of ${f(a)} square feet. It is ${w} feet wide. How long is it?`,ans:l,rem:null,word:true,hint:`Area = length × width, so length = ${f(a)} ÷ ${w}.`}}
+  const per=hardD(23,48),n=per*R(20,60)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`You need to store ${f(n)} blocks. One chest holds ${per} blocks. How many chests do you need for ALL of them?`,ans:a,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Leftover blocks need one more chest.`}}
+};
+const BOSSES=[
+ {lesson:'5-1',name:'THE ZERO TROLL',sub:'Patterns & mental math',model:'character-zombie',gen:'pattern',hp:5,tint:0x66ff88},
+ {lesson:'5-2',name:'ROUGHBOT 9000',sub:'Estimate with compatible numbers',model:'character-robot',gen:'estimate',hp:5,tint:0x66ccff},
+ {lesson:'5-3',name:'THE AREA ALIEN',sub:'Area models',model:'character-alien',gen:'model',hp:5,tint:0xb388ff},
+ {lesson:'5-4',name:'CHUNK PIRATE',sub:'Partial quotients',model:'character-raider',gen:'partial',hp:5,tint:0xffa94d},
+ {lesson:'5-5',name:'CAPTAIN REMAINDER',sub:'3-digit ÷ 2-digit',model:'character-soldier',gen:'algo3',hp:5,tint:0xff6b6b},
+ {lesson:'5-6',name:'THE MEGA FOREMAN',sub:'4-digit ÷ 2-digit',model:'character-worker',gen:'algo4',hp:5,tint:0xffd23f},
+ {lesson:'5-7',name:'THE SHAPESHIFTER',sub:'Choose a strategy (master this first!)',model:'character-male-e',gen:'mix',hp:6,tint:0xff4dd2},
+ {lesson:'5-8',name:'QUEEN OF WORDS',sub:'Word problems & remainders',model:'character-female-d',gen:'word',hp:6,tint:0xff3d3d},
+];
+
+const ladder=d=>[1,2,3,4,5,6,7,8,9].map(k=>f(k*d)).join(', ');
+function buildSteps(n,d){const ds=String(n).split('').map(Number);let i=0,cur=0;
+ while(i<ds.length-1&&cur*10+ds[i]<d){cur=cur*10+ds[i];i++}
+ cur=cur*10+ds[i];i++;const st=[];
+ while(true){const qd=Math.floor(cur/d),pr=qd*d,rm=cur-pr;const e=i-1;
+  st.push({k:'D',e,pr,rm,ask:`DIVIDE: How many ${d}s fit in ${f(cur)}?`,ans:qd,qd,hint:`Rule: biggest multiple of ${d} that is NOT more than ${f(cur)}.\nLadder: ${ladder(d)}\nIf ${d} doesn't fit at all, the answer is 0.`});
+  st.push({k:'M',e,pr,ask:`MULTIPLY: ${qd} × ${d} = ?`,ans:pr,hint:`Rule: multiply the number you just wrote on top by ${d}.`});
+  st.push({k:'S',e,rm,ask:`SUBTRACT: ${f(cur)} − ${f(pr)} = ?`,ans:rm,hint:`Rule: after you subtract, the answer must be LESS than ${d}.`});
+  if(i<ds.length){const nx=rm*10+ds[i];st.push({k:'B',e,dg:ds[i],ask:`BRING DOWN the next digit (${ds[i]}). What is the new number?`,ans:nx,hint:`Rule: write the ${ds[i]} right next to ${rm}.`});cur=nx;i++}
+  else break}
+ const Q=Math.floor(n/d),Rm=n%d;
+ st.push({k:'C',ask:`CHECK: ${f(Q)} × ${d} + ${Rm} = ?`,ans:n,hint:`Rule: quotient × divisor + remainder must equal ${f(n)}.`});
+ return st}
+const RULES={D:'1 DIVIDE',M:'2 MULTIPLY',S:'3 SUBTRACT',B:'4 BRING DOWN',C:'✓ CHECK'};
+/* ---------- state ---------- */
+const S={lvl:0,hp:0,mins:0,gems:0,streak:0,tries:0,cur:null,done:new Set(),sound:true,busy:false};
+try{const s=JSON.parse(localStorage.getItem('t5g')||'{}');if(s.mins)S.mins=s.mins;if(s.gems)S.gems=s.gems;if(s.done)S.done=new Set(s.done);}catch(e){}
+const save=()=>{try{localStorage.setItem('t5g',JSON.stringify({mins:S.mins,gems:S.gems,done:[...S.done]}))}catch(e){}};
+const $=id=>document.getElementById(id);
+
+/* ---------- sound ---------- */
+const SND={};['hit','crit','wrong','ok','win','loot'].forEach(k=>{SND[k]=new Audio('s/'+k+'.ogg');SND[k].preload='auto'});
+const play=k=>{if(!S.sound)return;const a=SND[k].cloneNode();a.volume=k==='win'?.6:.8;a.play().catch(()=>{})};
+$('snd').onclick=()=>{S.sound=!S.sound;$('snd').textContent=S.sound?'🔊':'🔇'};
+
+/* ---------- 3D scene ---------- */
+const canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+const scene=new THREE.Scene();{const cv=document.createElement('canvas');cv.width=2;cv.height=256;const g=cv.getContext('2d');const gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#3b6fd8');gr.addColorStop(.55,'#9fd0ff');gr.addColorStop(.8,'#ffd29a');gr.addColorStop(1,'#ffb46b');g.fillStyle=gr;g.fillRect(0,0,2,256);const tx=new THREE.CanvasTexture(cv);tx.colorSpace=THREE.SRGBColorSpace;scene.background=tx;}scene.fog=new THREE.Fog(0xffd2a0,16,42);
+const cam=new THREE.PerspectiveCamera(42,1,.1,200);
+scene.add(new THREE.HemisphereLight(0xdff3ff,0x3a5a2a,1.1));
+const sun=new THREE.DirectionalLight(0xffe0b0,2.6);sun.position.set(-7,10,6);
+const rim=new THREE.DirectionalLight(0x9fc4ff,1.4);rim.position.set(4,5,-8);scene.add(rim);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14});scene.add(sun);
+const ground=new THREE.Mesh(new THREE.CircleGeometry(40,64),new THREE.MeshStandardMaterial({color:0x5fb14a,roughness:1}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const arena=new THREE.Mesh(new THREE.CircleGeometry(4.6,48),new THREE.MeshStandardMaterial({color:0xc9a66b,roughness:1}));
+arena.rotation.x=-Math.PI/2;arena.position.y=.01;arena.receiveShadow=true;scene.add(arena);
+const ring=new THREE.Mesh(new THREE.RingGeometry(4.5,4.8,64),new THREE.MeshStandardMaterial({color:0x8a6a3a}));ring.rotation.x=-Math.PI/2;ring.position.y=.02;scene.add(ring);
+
+const loader=new GLTFLoader();const cache={};
+const load=url=>cache[url]||(cache[url]=new Promise((res,rej)=>loader.load(url,res,undefined,rej)));
+let hero,heroMix,heroClips,boss,bossMix,bossClips,bossBase;
+const actors=[];
+function shadowAll(o){o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}})}
+function playClip(mix,clips,name,once,fade=.15){
+ const c=THREE.AnimationClip.findByName(clips,name);if(!c)return;
+ const a=mix.clipAction(c);mix.stopAllAction();a.reset();a.fadeIn(fade);
+ if(once){a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true}else a.setLoop(THREE.LoopRepeat);a.play();
+ if(once&&name!=='die'){const back=()=>{mix.removeEventListener('finished',back);playClip(mix,clips,'idle',false)};mix.addEventListener('finished',back)}
+}
+async function makeChar(name,scale){
+ const g=await load('m/'+name+'.glb');const o=SkeletonUtils.clone(g.scene);o.scale.setScalar(scale);shadowAll(o);
+ const mix=new THREE.AnimationMixer(o);actors.push(mix);return {o,mix,clips:g.animations};
+}
+async function scenery(){
+ const props=[['tree',14,1.6],['tree-pine',12,1.8],['rocks',8,1.4],['barrel',4,1.2],['flag',2,1.6]];
+ for(const [n,count,s] of props){const g=await load('p/'+n+'.glb');
+  for(let i=0;i<count;i++){const o=g.scene.clone();const a=Math.random()*Math.PI*2;const r=(n==='flag'?5.2:7+Math.random()*12);
+   if(n==='flag'){const ang=i?Math.PI*0.5:-Math.PI*0.5;o.position.set(Math.cos(ang+Math.PI/2)*5.2,0,Math.sin(ang+Math.PI/2)*-5.2-1)}
+   else{const back=Math.random()<.7;const x=(Math.random()-.5)*34;const z=back?-(6+Math.random()*14):(Math.random()*6-3);o.position.set(back?x:(x<0?-1:1)*(8+Math.random()*8),0,z)}
+   o.rotation.y=Math.random()*6.28;o.scale.setScalar(s*(.8+Math.random()*.5));shadowAll(o);scene.add(o)}}
+}
+async function setBoss(i){
+ if(boss)scene.remove(boss);const b=BOSSES[i];
+ const c=await makeChar(b.model,3.2);boss=c.o;bossMix=c.mix;bossClips=c.clips;
+ boss.position.set(1.8,0,0);boss.visible=false;boss.rotation.y=-0.75;bossBase=boss.position.clone();scene.add(boss);
+ boss.traverse(m=>{if(m.isMesh){m.material=m.material.clone();m.material.emissive=new THREE.Color(b.tint);m.material.emissiveIntensity=.18}});
+ playClip(bossMix,bossClips,'idle',false);
+ aura.material.color.setHex(b.tint);
+}
+const aura=new THREE.Mesh(new THREE.RingGeometry(.9,1.25,40),new THREE.MeshBasicMaterial({color:0xff0000,transparent:true,opacity:.55,side:THREE.DoubleSide}));
+aura.visible=false;aura.rotation.x=-Math.PI/2;aura.position.set(1.8,.03,0);aura.scale.setScalar(1.4);scene.add(aura);
+
+/* ---------- explore phase (before each level) ---------- */
+const keys={};let target=null;const items=[];const G={};let heroMoving=false;let vy=0,boost=0,portal=null,hasKey=false;
+addEventListener('keydown',e=>{if(!S.play)return;const k=e.key.toLowerCase();keys[k]=true;if(e.key.startsWith('Arrow')||k===' ')e.preventDefault();
+ if(k===' '&&hero.position.y<=0.001){vy=6.5;playClip(heroMix,heroClips,'jump',true);heroMoving=null}});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+const ray=new THREE.Raycaster();
+canvas.addEventListener('pointerdown',e=>{if(!S.play)return;const m=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(m,cam);const h=ray.intersectObject(ground);if(h[0])target=h[0].point.clone()});
+const PR=8.5;
+function spot(minR,maxR){const a=Math.random()*6.28,r=minR+Math.random()*(maxR-minR);return new THREE.Vector3(Math.cos(a)*r,0,Math.sin(a)*r)}
+async function explore(done){items.splice(0).forEach(o=>scene.remove(o));if(portal){scene.remove(portal.g);portal=null}S.play=true;S.busy=true;document.body.classList.add('playing');
+ for(const n of ['coin-gold','jewel','star','key'])if(!G[n])G[n]=await load('p/'+n+'.glb');
+ hero.visible=true;hero.position.set(0,0,3);hero.rotation.y=Math.PI;playClip(heroMix,heroClips,'idle',false);heroMoving=false;target=null;vy=0;boost=0;hasKey=false;
+ const add=(n,pos,sc,y)=>{const o=G[n].scene.clone();o.position.copy(pos);o.position.y=y;o.scale.setScalar(sc);shadowAll(o);o.userData={n,y};scene.add(o);items.push(o);return o};
+ for(let i=0;i<14;i++)add('coin-gold',spot(1,PR-.5),1.6,.5);
+ for(let i=0;i<3;i++)add('jewel',spot(4,PR-.5),1.8,.6);
+ add('star',spot(3,PR-1),1.8,.7);
+ add('key',spot(5.5,PR-.6),2,.6);
+ // portal
+ const pg=new THREE.Group();const ringM=new THREE.MeshStandardMaterial({color:0x555566,emissive:0x111122,metalness:.3,roughness:.5});
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.18,16,48),ringM);ring.position.y=1.3;pg.add(ring);
+ const fill=new THREE.Mesh(new THREE.CircleGeometry(1,40),new THREE.MeshBasicMaterial({color:0x223344,transparent:true,opacity:.5,side:THREE.DoubleSide}));fill.position.y=1.3;pg.add(fill);
+ const pos=spot(PR-1.6,PR-1.4);pg.position.copy(pos);pg.lookAt(0,0,0);scene.add(pg);portal={g:pg,ringM,fill};
+ let coinsGot=0,jew=0;S.onItem=n=>{
+  if(n==='coin-gold'){coinsGot++;if(coinsGot===14){S.mins++;stats();toast('ALL COINS! +1 min',1100)}}
+  if(n==='jewel'){jew++;S.gems++;S.mins++;stats();toast('💎 JEWEL! +1 min',900,'#7fd8ff')}
+  if(n==='star'){boost=6;toast('⭐ SPEED BOOST!',900)}
+  if(n==='key'){hasKey=true;ringM.color.setHex(0xffd23f);ringM.emissive.setHex(0xff9d00);fill.material.color.setHex(0x7a4dff);fill.material.opacity=.85;toast('🔑 KEY FOUND! Run to the PORTAL!',1500,'#ffd23f')}
+  hud()};
+ const b=BOSSES[S.lvl];
+ function hud(){$('ptxt').innerHTML=`<b>${b.lesson}</b> ARENA · 🪙 ${coinsGot}/14 · 💎 ${jew}/3 · ${hasKey?'🔑 ✔ → enter the <b>PORTAL</b>!':'find the 🔑 key'}`}
+ hud();toast(`${b.lesson} ARENA: find the key!`,1500,'#3fdc7a');
+ const t0=performance.now();
+ S.endExplore=()=>{S.play=false;items.splice(0).forEach(o=>scene.remove(o));scene.remove(pg);portal=null;hero.visible=false;hero.position.y=0;document.body.classList.remove('playing');for(const k in keys)keys[k]=false;S.busy=false;S.endExplore=null;toast(`${b.name}!`,1200);done()};
+ S.exploreT0=t0}
+function playTick(dt,t){if(!S.play||!hero)return;let dx=0,dz=0;
+ if(keys['arrowleft']||keys['a'])dx-=1;if(keys['arrowright']||keys['d'])dx+=1;if(keys['arrowup']||keys['w'])dz-=1;if(keys['arrowdown']||keys['s'])dz+=1;
+ if(dx||dz)target=null;else if(target){const v=target.clone().sub(hero.position);v.y=0;if(v.length()>.15){dx=v.x;dz=v.z}else target=null}
+ const mv=Math.hypot(dx,dz)>0;boost=Math.max(0,boost-dt);const sp=boost>0?7.5:4.5;
+ if(mv){const l=Math.hypot(dx,dz);dx/=l;dz/=l;hero.position.x+=dx*sp*dt;hero.position.z+=dz*sp*dt;
+  const r=Math.hypot(hero.position.x,hero.position.z);if(r>PR){hero.position.x*=PR/r;hero.position.z*=PR/r}
+  hero.rotation.y=Math.atan2(dx,dz)}
+ vy-=18*dt;hero.position.y=Math.max(0,hero.position.y+vy*dt);if(hero.position.y===0)vy=0;
+ if(hero.position.y===0&&mv!==heroMoving){heroMoving=mv;playClip(heroMix,heroClips,mv?'sprint':'idle',false)}
+ if(boost>0&&Math.random()<.5)burst(hero.position.clone().add(new THREE.Vector3(0,.3,0)),0xffd23f,1,1.5);
+ const hp=new THREE.Vector3(hero.position.x,hero.position.y+.5,hero.position.z);
+ for(let i=items.length-1;i>=0;i--){const c=items[i];c.rotation.y+=dt*(c.userData.n==='key'?2:3);c.position.y=c.userData.y+Math.sin(t*3+i)*.15;
+  if(c.position.distanceTo(hp)<.85){scene.remove(c);items.splice(i,1);play('loot');burst(c.position.clone(),c.userData.n==='jewel'?0x7fd8ff:0xffd23f,c.userData.n==='key'?60:25,4);S.onItem(c.userData.n)}}
+ if(portal){portal.g.children[0].rotation.z+=dt*(hasKey?3:.4);portal.fill.rotation.z-=dt*2;
+  if(hasKey){if(Math.random()<.4)burst(portal.g.position.clone().add(new THREE.Vector3(0,1.3,0)),0x9f7bff,1,2);
+   const d=Math.hypot(hero.position.x-portal.g.position.x,hero.position.z-portal.g.position.z);if(d<1.1&&S.endExplore){flash('#c8b6ff');play('win');S.endExplore()}}}}
+/* particles */
+const parts=[];
+function burst(pos,color,n=40,speed=5){
+ for(let i=0;i<n;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.09,.09,.09),new THREE.MeshBasicMaterial({color}));
+  m.position.copy(pos);const v=new THREE.Vector3((Math.random()-.5)*speed,Math.random()*speed,(Math.random()-.5)*speed);
+  scene.add(m);parts.push({m,v,life:1})}}
+let shake=0;
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;
+ cam.fov=w/h<1?64:42;const far=w/h<1?10:7.2;const ox=w>900?2.1:0;cam.position.set(ox,3,far);cam.lookAt(ox,w/h<1?-1.6:.3,0);cam.updateProjectionMatrix()}
+addEventListener('resize',resize);
+const clock=new THREE.Clock();
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);const t=clock.elapsedTime;
+ actors.forEach(m=>m.update(dt));playTick(dt,t);
+ for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.v.y-=12*dt;p.m.position.addScaledVector(p.v,dt);p.m.rotation.x+=dt*8;p.life-=dt*1.1;p.m.scale.setScalar(Math.max(p.life,0.01));
+  if(p.life<=0||p.m.position.y<0){scene.remove(p.m);parts.splice(i,1)}}
+ aura.rotation.z=t*.8;aura.material.opacity=.35+.2*Math.sin(t*4);
+ const por=innerWidth/innerHeight<1;
+ if(S.play&&hero){const want=new THREE.Vector3(hero.position.x,por?7:5,hero.position.z+(por?9:7.5));cam.position.lerp(want,Math.min(1,dt*4));cam.lookAt(hero.position.x,.6,hero.position.z-1)}
+ else{const far=por?10:7.2;const ox=innerWidth>900?2.1:0;
+ cam.position.x=ox+Math.sin(t*.25)*.4+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(ox,por?-1.6:.3,0);}
+ shake*=.88;renderer.render(scene,cam)}
+
+/* ---------- screen fx ---------- */
+function toast(txt,ms=1100,color){const el=$('toast');el.textContent=txt;el.style.color=color||'';el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms)}
+function flash(c='#fff'){const el=$('flash');el.style.background=c;el.style.opacity=.6;setTimeout(()=>el.style.opacity=0,80)}
+function dmgNum(txt,crit){if(!boss)return;const v=boss.position.clone();v.y+=2.4;v.project(cam);
+ const el=document.createElement('div');el.className='dmg'+(crit?' crit':'');el.textContent=txt;
+ el.style.left=((v.x+1)/2*innerWidth-30)+'px';el.style.top=((1-v.y)/2*innerHeight)+'px';document.body.appendChild(el);
+ requestAnimationFrame(()=>{el.style.transform=`translate(${(Math.random()-.5)*80}px,-110px)`;el.style.opacity=0});setTimeout(()=>el.remove(),950)}
+function knock(o,dx){if(!o)return;const base=o===boss?bossBase:o.position.clone();let k=0;const step=()=>{k++;o.position.x=base.x+dx*Math.sin(k/10*Math.PI);if(k<10)requestAnimationFrame(step);else o.position.x=base.x};step()}
+function lunge(){const x0=-1.8;let k=0;const step=()=>{k++;hero.position.x=x0+1.6*Math.sin(k/16*Math.PI);if(k<16)requestAnimationFrame(step);else hero.position.x=x0};step()}
+
+/* ---------- UI ---------- */
+function drawMap(){const m=$('map');m.innerHTML='';BOSSES.forEach((b,i)=>{const bt=document.createElement('button');bt.textContent=b.lesson;
+ bt.className=(S.done.has(i)?'done ':'')+(i===S.lvl?'cur':'');bt.title=b.name+': '+b.sub;bt.onclick=()=>startLevel(i);m.appendChild(bt)})}
+function stats(){$('mins').textContent=S.mins;$('gems').textContent=S.gems;$('streak').textContent=S.streak;save()}
+function newQ(){S.cur=GEN[BOSSES[S.lvl].gen]();S.tries=0;const c=S.cur;$('prompt').textContent=c.prompt;$('q').textContent=c.q;$('hint').textContent='';
+ const box=$('inputs');box.innerHTML='';$('rules').style.display='none';$('board').style.display='none';document.body.classList.remove('stepmode');
+ if(c.steps){S.st=buildSteps(c.n,c.d);S.si=0;S.qs='';S.stTries=0;$('prompt').textContent='Long division, one move at a time. Does McDonald\'s Sell Nuggets? Then CHECK!';renderStep();return}
+ const mk=(id,ph)=>{const i=document.createElement('input');i.id=id;i.placeholder=ph;i.inputMode='numeric';i.autocomplete='off';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(id==='a'&&$('r')&&!$('r').value&&$('a').value)$('r').focus();else submit()}};return i};
+ document.body.classList.add('stepmode');$('board').style.display='block';$('board').innerHTML=staticBoard(c);if(c.word)$('q').textContent='';
+ const rl=$('rules');rl.style.display='flex';rl.innerHTML=`<div class="rulecard"><b>RULE</b><br>${c.rule||(c.word?WORD_RULE:'Divide. Multiply. Subtract. Bring down. Check!')}</div>`;
+ if(c.rem!==null){box.append(lbl('Q'),mk('a','quotient'),lbl('R'),mk('r','remainder'))}else box.append(mk('a',c.ph||(c.est?'estimate':'answer')));
+ setTimeout(()=>$('a').focus(),50)}
+const WORD_RULE="Divide. Then ask what the remainder MEANS: round UP (everyone needs room), DROP it (only full groups), or the remainder IS the answer.";
+function staticBoard(c){const m=c.q.replace(/,/g,'').match(/^(\d+) ÷ (\d+)( ≈ \?)?$/);
+ if(m){const ds=m[1].split('');return `<table class="ld"><tr><td class="dv"></td><td></td>${ds.map((_,j)=>`<td class="q${j===ds.length-1?' hot':''}">${j===ds.length-1?'?':''}</td>`).join('')}</tr><tr><td class="dv">${m[2]}</td><td class="br">)</td>${ds.map(v=>`<td class="dd">${v}</td>`).join('')}</tr></table><div class="chk" style="color:#cfe9d8">Work it on paper too, then hold it up!</div>`}
+ return `<div class="chalk">${c.q}</div>`}
+function boardHTML(){const n=S.cur.n,d=S.cur.d;const ds=String(n).split('');const L=ds.length;
+ const qrow=Array(L).fill(''),qhot=Array(L).fill(false);const rows=[];let arrow=-1;
+ const place=(str,end)=>{const c=Array(L).fill('');const st=end-str.length+1;for(let j=0;j<str.length;j++)c[st+j]=str[j];return {c,st}};
+ for(let i=0;i<=S.si&&i<S.st.length;i++){const x=S.st[i],pend=i===S.si;
+  if(x.k==='D'){qrow[x.e]=pend?'?':String(x.qd);qhot[x.e]=pend}
+  else if(x.k==='M'){const p=place(pend?'?':String(x.pr),x.e);rows.push({...p,minus:true,ul:true,hot:pend,from:x.e-String(x.pr).length+1,to:x.e})}
+  else if(x.k==='S'){const p=place(pend?'?':String(x.rm),x.e);rows.push({...p,hot:pend})}
+  else if(x.k==='B'){const last=rows[rows.length-1];last.c[x.e+1]=pend?'?':x.dg;last.hotCol=pend?x.e+1:-1;if(pend)arrow=x.e+1;else last.down=x.e+1}}
+ const td=(v,cls)=>`<td class="${cls||''}">${v===''?'':v}</td>`;
+ let h='<table class="ld"><tr><td class="dv"></td><td></td>'+qrow.map((v,j)=>td(v,'q'+(qhot[j]?' hot':''))).join('')+'</tr>';
+ h+=`<tr><td class="dv">${d}</td><td class="br">)</td>`+ds.map((v,j)=>td(v,'dd'+(j===arrow?' arr':''))).join('')+'</tr>';
+ rows.forEach(r=>{let g='';h+='<tr><td class="dv"></td>';
+  const minusCol=r.minus?r.st-1:-9;h+=td(minusCol===-1?'−':'','ms');
+  r.c.forEach((v,j)=>{let cls='';if(j===minusCol)v='−',cls='ms';if(r.ul&&j>=Math.min(r.from,r.st)&&j<=r.to)cls+=' ul';
+   if(r.hot&&v==='?')cls+=' hot';if(r.hotCol===j)cls+=' hot';if(r.down===j)cls+=' bd';h+=td(v,cls)});h+='</tr>'});
+ h+='</table>';
+ if(S.si>=S.st.length-1&&S.st[S.st.length-1].k==='C'){h+=`<div class="chk">✓ CHECK: ${f(Math.floor(n/d))} × ${d} + ${n%d} = ${S.si>=S.st.length?f(n):'?'}</div>`}
+ return h}
+function renderStep(){const st=S.st[S.si];const r=$('rules');r.style.display='flex';
+ r.innerHTML=['D','M','S','B','C'].map(k=>`<span class="${k===st.k?'on':''}">${RULES[k]}</span>`).join('');
+ const b=$('board');b.style.display='block';b.innerHTML=boardHTML();document.body.classList.add('stepmode');
+ const box=$('inputs');box.innerHTML='';const ask=document.createElement('div');ask.id='stepAsk';ask.textContent=st.ask;
+ const i=document.createElement('input');i.id='a';i.inputMode='numeric';i.autocomplete='off';i.placeholder='?';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit()}};
+ box.style.flexDirection='column';box.append(ask,i);$('hint').textContent='';setTimeout(()=>i.focus(),30)}
+function stepSubmit(){const st=S.st[S.si];const v=num($('a').value);if(isNaN(v))return;
+ if(v===st.ans){S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);play('ok');playClip(heroMix,heroClips,'interact-right',true);
+  const p=boss.position.clone();p.y+=1.4;burst(p,0xffffff,12,3);shake=.08;
+  S.si++;if(S.si>=S.st.length){$('inputs').style.flexDirection='';$('hint').textContent='';hit();return}
+  if(S.st[S.si].k==='C')toast('CHECK IT!',700,'#3fdc7a');renderStep()}
+ else{S.stTries++;S.streak=0;stats();play('wrong');playClip(bossMix,bossClips,'emote-no',true);
+  if(S.stTries===1){$('hint').textContent='Not yet! '+st.hint;$('a').value='';$('a').focus()}
+  else{$('hint').textContent=`It's ${f(st.ans)}. ${st.hint}`;S.busy=true;setTimeout(()=>{S.busy=false;S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);S.si++;if(S.si>=S.st.length){$('inputs').style.flexDirection='';newQ()}else renderStep()},2600)}}}
+const lbl=t=>{const l=document.createElement('label');l.textContent=t;return l};
+const num=v=>v===''?NaN:Number(String(v).replace(/[, ]/g,''));
+async function startLevel(i){S.lvl=i;S.hp=BOSSES[i].hp;S.busy=true;const b=BOSSES[i];
+ $('bname').textContent=`${b.lesson} · ${b.name}`;$('bsub').textContent=b.sub;$('hp').style.width='0%';drawMap();
+ await setBoss(i);S.busy=false;if(S.endExplore)S.endExplore=null;explore(newQ)}
+function submit(){if(S.busy||!S.cur)return;const c=S.cur;if(c.steps)return stepSubmit();const a=num($('a').value);const r=$('r')?num($('r').value||'0'):null;
+ if(isNaN(a)){$('a').focus();return}
+ let ok;if(c.est){ok=Math.abs(a-c.ans)<=Math.max(1,c.ans*.15)||Math.abs(a-c.exact)<=Math.max(1,c.exact*.15)}else ok=a===c.ans&&(c.rem===null||r===c.rem);
+ if(ok)hit();else miss()}
+function hit(){S.busy=true;S.streak++;const crit=S.streak>=3&&S.streak%3===0;S.mins++;stats();
+ playClip(heroMix,heroClips,'interact-right',true);
+ setTimeout(()=>{const dmg=crit?2:1;S.hp=Math.max(0,S.hp-dmg);$('hp').style.width=((1-S.hp/BOSSES[S.lvl].hp)*100)+'%';
+  play(crit?'loot':'ok');flash(crit?'#ffd23f':'#fff');shake=crit?.6:.25;
+  const p=boss.position.clone();p.y+=1.4;burst(p,crit?0xffd23f:BOSSES[S.lvl].tint,crit?70:35,crit?8:5);
+  dmgNum(crit?'⚡⚡ +2':'⚡ +1',crit);if(crit)toast('SUPER CHARGE!',900);
+  if(S.cur.est)$('hint').textContent=`Nice estimate! Friendly-number answer: ${S.cur.ans}.`;
+  setTimeout(()=>{if(S.hp<=0)win();else{S.busy=false;newQ()}},S.cur.est?900:550)},280)}
+function miss(){S.tries++;S.streak=0;stats();play('wrong');
+ playClip(bossMix,bossClips,'emote-no',true);
+ const c=S.cur;
+ if(S.tries===1){$('hint').textContent='Not yet! Hint:\n'+c.hint;toast('NOT YET!',700,'#ffb03a')}
+ else{$('hint').textContent=`Answer: ${f(c.ans)}${c.rem!==null?' R'+c.rem:''}.\n${c.hint}\nNew problem coming…`;S.busy=true;setTimeout(()=>{S.busy=false;newQ()},3200)}
+ ['a','r'].forEach(id=>{if($(id))$(id).value=''});if($('a'))$('a').focus()}
+function win(){playClip(bossMix,bossClips,'emote-yes',true);play('win');S.done.add(S.lvl);drawMap();
+ const p=boss.position.clone();p.y+=1;burst(p,0xffd23f,120,9);shake=.8;toast('GATE UNLOCKED!',1500);
+ setTimeout(()=>{play('loot');const gem=Math.random()<.5;if(gem){S.gems++;S.mins+=2}else S.mins+=1;stats();
+  $('chestIcon').textContent=gem?'💎':'🪙';$('chestTitle').textContent=gem?'DIAMOND DROP! +2 min':'Gold coin! +1 min';
+  $('chestText').innerHTML=`You unlocked the gate of <b>${BOSSES[S.lvl].name}</b> (lesson ${BOSSES[S.lvl].lesson}).<br>Free time banked: <b style="color:#ffd23f">${S.mins} min</b>`+
+   (S.done.size===8?'<br><br>🏆 ALL 8 GATES UNLOCKED. You are ready for Thursday.':'');
+  $('chestGo').textContent='NEXT GATE ▶';$('chest').style.display='flex'},1700)}
+$('skipEx').onclick=()=>{if(S.endExplore)S.endExplore()};
+$('chestGo').onclick=()=>{$('chest').style.display='none';const k=ORDER.indexOf(S.lvl);const nx=ORDER.slice(k+1).find(i=>!S.done.has(i));startLevel(nx===undefined?ORDER[(k+1)%8]:nx)};
+$('go').onclick=submit;
+$('work').onclick=()=>{S.mins++;stats();play('ok');toast('📝 WORK SHOWN +1',800,'#3fdc7a')};
+addEventListener('keydown',e=>{if(!S.play&&(e.key==='w'||e.key==='W')&&document.activeElement.tagName!=='INPUT')$('work').click()});
+
+/* ---------- boot ---------- */
+(async()=>{try{
+ resize();loop();
+ $('load').textContent='Loading the arena…';await scenery();
+ const h=await makeChar('character-knight',2.4);hero=h.o;heroMix=h.mix;heroClips=h.clips;hero.position.set(-1.8,0,0);hero.visible=false;hero.rotation.y=0.75;scene.add(hero);playClip(heroMix,heroClips,'idle',false);
+ await Promise.all(BOSSES.map(b=>load('m/'+b.model+'.glb')));
+ $('load').textContent='';$('startBtn').disabled=false;$('startBtn').textContent='ENTER THE ARENA ⚔️';
+}catch(e){$('load').textContent='Load error: '+e.message;console.error(e)}})();
+const ORDER=[6,5,4,3,2,1,0,7];
+$('startBtn').onclick=()=>{$('start').style.display='none';const first=ORDER.find(i=>!S.done.has(i));startLevel(first===undefined?6:first)};
+drawMap();stats();
+</script>
+</body>
+</html>
