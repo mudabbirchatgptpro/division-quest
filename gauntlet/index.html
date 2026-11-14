@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Topic 5 Gauntlet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#ffd23f;--red:#ff4d5a;--ink:#0d0f1a}
 *{box-sizing:border-box}
@@ -48,11 +49,40 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0d0f1a;font-family:"T
 #start h1{font-size:44px;margin:0 0 6px;color:var(--gold);text-shadow:0 4px 0 #000}
 #load{opacity:.8;margin-top:10px}
 @media (max-width:600px){#stats{font-size:14px}#bname{font-size:20px}#inputs input{width:120px;font-size:22px}}
+
+html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-spacing:.4px}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
+.panel{background:linear-gradient(180deg,rgba(40,28,10,.82),rgba(18,12,4,.88));border:3px solid #c9932e;box-shadow:0 0 0 3px #3a2508,0 8px 24px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,220,140,.25);border-radius:16px}
+#map button{font-family:inherit;font-weight:400;font-size:16px;background:linear-gradient(180deg,#4a3a20,#2a1f0e);border:2px solid #8a6a2a;color:#f3dca6;box-shadow:0 3px 0 #000}
+#map button.cur{background:linear-gradient(180deg,#ffcc33,#d18a00);border-color:#fff3b0;color:#2a1600}
+#map button.done{background:linear-gradient(180deg,#4bd06b,#1d7a37);border-color:#b6ffc8}
+#stats{font-weight:400;font-size:20px}
+#boss{top:70px}
+#bname{font-size:38px;font-weight:400;color:#fff;text-shadow:0 4px 0 #000,0 0 18px rgba(255,80,80,.7);-webkit-text-stroke:1px #000}
+#bname{line-height:1.1;margin-bottom:4px}
+#bsub{font-size:16px;color:#ffe2a8;text-shadow:0 2px 0 #000;margin-bottom:6px}
+#hint{min-height:0}#hint:empty{display:none}
+#hpbar{height:26px;border:3px solid #000;box-shadow:0 0 0 2px #c9932e;border-radius:14px;background:#3a0b10}
+#hp{background:linear-gradient(180deg,#ff6b6b,#d1102e 60%,#8a0018);box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
+#qbox{width:min(640px,94vw);padding:10px 16px 12px}
+#prompt{font-size:15px;color:#ffe2a8;opacity:1}
+#q{font-size:clamp(30px,5vw,50px);font-weight:400;color:#fff;-webkit-text-stroke:1px #000;text-shadow:0 4px 0 #000;margin:0 0 8px}
+#inputs input{font-family:inherit;font-weight:400;font-size:30px;border:3px solid #8a6a2a;background:#120c03;color:#ffe27a;box-shadow:inset 0 3px 8px rgba(0,0,0,.7)}
+#inputs input:focus{border-color:#ffd23f;box-shadow:0 0 0 4px rgba(255,210,63,.35),inset 0 3px 8px rgba(0,0,0,.7)}
+#inputs label{font-weight:400;color:#ffd23f;text-shadow:0 2px 0 #000}
+.btn{font-family:inherit;font-weight:400;font-size:24px;background:linear-gradient(180deg,#ffe066,#f0a500);border:3px solid #000;box-shadow:0 5px 0 #6b3d00,0 8px 14px rgba(0,0,0,.4);text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.btn.sm{font-size:16px;background:linear-gradient(180deg,#3f8f4f,#1f5a2c);color:#fff;box-shadow:0 4px 0 #0b2a12;text-shadow:0 1px 0 #000}
+#hint{font-size:17px;color:#bfe9ff;text-shadow:0 1px 0 #000}
+#toast{font-weight:400;-webkit-text-stroke:2px #000}
+.dmg{font-weight:400;-webkit-text-stroke:2px #000;font-size:48px}
+.dmg.crit{font-size:68px}
+#start h1{font-weight:400;font-size:54px;-webkit-text-stroke:2px #000}
+#chest h2{font-weight:400;-webkit-text-stroke:1px #000}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="flash"></div>
+<div id="vig"></div><div id="flash"></div>
 <div class="hud" id="top">
   <div class="panel" id="map"></div>
   <div class="panel" id="stats">
@@ -155,10 +185,11 @@ const canvas=$('c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x7ec8ff);scene.fog=new THREE.Fog(0x7ec8ff,18,45);
+const scene=new THREE.Scene();{const cv=document.createElement('canvas');cv.width=2;cv.height=256;const g=cv.getContext('2d');const gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#3b6fd8');gr.addColorStop(.55,'#9fd0ff');gr.addColorStop(.8,'#ffd29a');gr.addColorStop(1,'#ffb46b');g.fillStyle=gr;g.fillRect(0,0,2,256);const tx=new THREE.CanvasTexture(cv);tx.colorSpace=THREE.SRGBColorSpace;scene.background=tx;}scene.fog=new THREE.Fog(0xffd2a0,16,42);
 const cam=new THREE.PerspectiveCamera(42,1,.1,200);
 scene.add(new THREE.HemisphereLight(0xdff3ff,0x3a5a2a,1.1));
-const sun=new THREE.DirectionalLight(0xfff1d6,2.2);sun.position.set(6,12,7);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+const sun=new THREE.DirectionalLight(0xffe0b0,2.6);sun.position.set(-7,10,6);
+const rim=new THREE.DirectionalLight(0x9fc4ff,1.4);rim.position.set(4,5,-8);scene.add(rim);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
 Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14});scene.add(sun);
 const ground=new THREE.Mesh(new THREE.CircleGeometry(40,64),new THREE.MeshStandardMaterial({color:0x5fb14a,roughness:1}));
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
