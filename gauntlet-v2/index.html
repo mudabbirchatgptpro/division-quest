@@ -150,7 +150,7 @@ body.playing #playbar{display:block}
 <div id="chest"><div class="panel"><div id="chestIcon" style="font-size:80px">🧰</div><h2 id="chestTitle"></h2><div id="chestText" style="font-size:20px"></div><br><button class="btn" id="chestGo">NEXT GATE ▶</button></div></div>
 <div id="start"><div class="panel">
   <h1>TOPIC 5 GATE QUEST</h1>
-  <div style="font-size:19px;line-height:1.5">8 magic gates. One for each lesson on Thursday's test.<br>Every right answer charges the gate. Every right answer = <b style="color:#ffd23f">+1 free minute</b>.<br>3 in a row = <b style="color:#ffd23f">SUPER CHARGE</b>. Unlock a gate = loot chest.</div><br>
+  <div style="font-size:19px;line-height:1.5">2 test gates: 5-7 and 5-8, test level.<br>Every right answer charges the gate. Every right answer = <b style="color:#ffd23f">+1 free minute</b>.<br>3 in a row = <b style="color:#ffd23f">SUPER CHARGE</b>. Unlock a gate = loot chest.</div><br>
   <button class="btn" id="startBtn" disabled>LOADING…</button>
   <div id="load"></div>
 </div></div>
@@ -167,7 +167,24 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const f=n=>n.toLocaleString('en-US');
 const hardD=(lo,hi)=>{let d;do{d=R(lo,hi)}while(Math.random()<.65&&d%10<6);return d};
 const zeroQ3=()=>{const h=R(1,4),o=R(1,9);return Math.random()<.55?h*100+o:R(101,409)};
+const qZero=d=>{const max=Math.floor(9999/d);let q;do{const h=R(1,9),t=pick([0,0,R(1,9)]),o=pick([0,R(1,9),R(1,9)]);q=h*100+t*10+o}while(q>max||q<100||!String(q).slice(1).includes('0'));return q};
 const GEN={
+ hard7(){const t=pick(['algo','algo','algo','det','det','miss','rem']);
+  if(t==='algo'){let d,q,r,n;do{d=hardD(23,89);q=qZero(d);r=Math.random()<.2?0:R(1,d-1);n=d*q+r}while(n>9999||n<2000);
+   return {prompt:'4-digit ÷ 2-digit. Watch for ZEROS in the quotient!',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,hint:''}}
+  if(t==='det'){let d,q,r,n;do{d=hardD(23,48);q=qZero(d);r=R(1,d-1);n=d*q+r}while(n>9999||n<2000);
+   if(Math.random()<.5){const wrong=Number(String(q).replace(/0/g,''));return {rule:'Check: quotient × divisor + remainder = dividend. If the divisor does not fit after you bring down, write 0.',prompt:'ERROR DETECTIVE: Max dropped something.',q:`Max says ${f(n)} ÷ ${d} = ${wrong} R${r}`,ans:q,rem:null,ph:'correct quotient',hint:`Check Max: ${wrong} × ${d} + ${r} = ${f(wrong*d+r)}, not ${f(n)}. Every bring-down needs a digit on top, even 0!`}}
+   const q2=q-1,r2=r+d;return {rule:'The remainder must ALWAYS be less than the divisor. If it is not, the quotient is too small.',prompt:"ERROR DETECTIVE: something is wrong with Max's remainder.",q:`Max says ${f(n)} ÷ ${d} = ${q2} R${r2}`,ans:q,rem:r,ph:'correct',hint:`R${r2} is bigger than ${d}! One more ${d} fits. Add 1 to the quotient and subtract ${d} from the remainder.`}}
+  if(t==='miss'){const d=hardD(23,68);const q=qZero(d);const r=R(1,d-1);return {rule:'dividend = quotient × divisor + remainder.',prompt:'Work BACKWARD.',q:`? ÷ ${d} = ${q} R${r}`,ans:d*q+r,rem:null,ph:'dividend',hint:`${q} × ${d} + ${r} = ?`}}
+  const d=hardD(23,48);const r=R(1,d-1);const q=R(120,249);const n=d*q+r;return {rule:'Remainder = dividend − quotient × divisor. It must be less than the divisor.',prompt:'Find ONLY the remainder.',q:`${f(n)} ÷ ${d} = ${q} R ?`,ans:r,rem:null,ph:'remainder',hint:`${q} × ${d} = ${f(q*d)}. ${f(n)} − ${f(q*d)} = ?`}},
+ hard8(){const t=R(0,6);
+  if(t===0){const p=hardD(24,48),k=R(40,180),r=R(1,p-1),n=p*k+r;return {word:true,prompt:'2-step: what does the remainder mean?',q:`${f(n)} cards go into packs of ${p}. How many MORE cards are needed to fill one more pack?`,ans:p-r,rem:null,hint:`${f(n)} ÷ ${p} = ${k} R${r}. The last pack has ${r}. It needs ${p} − ${r} more.`}}
+  if(t===1){const p=hardD(36,58),n=p*R(8,25)+R(1,p-1),c=R(85,160);const b=Math.ceil(n/p);return {word:true,prompt:'2-step word problem.',q:`${f(n)} students go on a trip. Each bus holds ${p} students and costs $${c}. What is the total cost of the buses?`,ans:b*c,rem:null,hint:`Step 1: ${f(n)} ÷ ${p} = ${Math.floor(n/p)} R${n%p} → ${b} buses (round UP).\nStep 2: ${b} × $${c}.`}}
+  if(t===2){const p=hardD(24,48),k=R(60,240),r=R(1,p-1),n=p*k+r;return {word:true,prompt:'Write BOTH: full cases and how many are left.',q:`A farm packs ${f(n)} eggs into cases of ${p}. How many FULL cases, and how many eggs are left?`,ans:k,rem:r,hint:`${f(n)} ÷ ${p}. Quotient = full cases. Remainder = eggs left.`}}
+  if(t===3){const p=hardD(23,47),n=p*R(30,95)+R(1,p-1);return {word:true,prompt:'What does the remainder mean?',q:`A book has ${f(n)} pages. Parker reads ${p} pages a day. How many days to finish the WHOLE book?`,ans:Math.ceil(n/p),rem:null,hint:`${f(n)} ÷ ${p} = ${Math.floor(n/p)} R${n%p}. The leftover pages need one more day.`}}
+  if(t===4){const k=hardD(23,39),each=R(105,309),r=R(1,k-1),n=k*each+r;return {word:true,prompt:'2-step word problem.',q:`${f(n)} stickers are shared equally by ${k} kids. The leftovers go to the teacher. How many stickers does the teacher get?`,ans:r,rem:null,hint:`${f(n)} ÷ ${k} = ${each} R${r}. The teacher gets the remainder.`}}
+  if(t===5){const w=hardD(26,48),l=R(104,209),a=w*l;return {word:true,prompt:'Area word problem.',q:`A rectangular field has an area of ${f(a)} square yards. It is ${w} yards wide. How long is it?`,ans:l,rem:null,hint:`Length = area ÷ width = ${f(a)} ÷ ${w}. Watch for a 0 in the quotient!`}}
+  const a=hardD(23,39),b=hardD(41,68);const qa=R(150,260),qb=R(60,140);const na=a*qa,nb=b*qb;return {word:true,prompt:'2-step: divide twice, then compare.',q:`Team A has ${f(na)} blocks in ${a} equal stacks. Team B has ${f(nb)} blocks in ${b} equal stacks. How many MORE blocks are in each Team A stack than each Team B stack?`,ans:Math.abs(qa-qb),rem:null,hint:`A: ${f(na)} ÷ ${a} = ?   B: ${f(nb)} ÷ ${b} = ?   Then subtract.`}},
  // 5-1 patterns and mental math
  pattern(){let q,d;if(Math.random()<.45){const pr=pick([[4,5],[6,5],[8,5],[2,5],[4,5],[8,5]]);d=pr[1]*10*pick([1,1,10]);q=pr[0]*pick([10,100]);}else{q=R(4,9)*pick([10,100]);d=R(4,9)*10;}const n=q*d;
   return {rule:'Cross out the SAME number of zeros from both numbers. Do the basic fact. Careful: 40 ÷ 5 = 8 already used a zero!',prompt:'Use patterns. Cross out zeros, then use a basic fact.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
@@ -218,14 +235,8 @@ const GEN={
   const per=hardD(23,48),n=per*R(20,60)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`You need to store ${f(n)} blocks. One chest holds ${per} blocks. How many chests do you need for ALL of them?`,ans:a,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Leftover blocks need one more chest.`}}
 };
 const BOSSES=[
- {lesson:'5-1',name:'THE ZERO TROLL',sub:'Patterns & mental math',model:'character-zombie',gen:'pattern',hp:5,tint:0x66ff88},
- {lesson:'5-2',name:'ROUGHBOT 9000',sub:'Estimate with compatible numbers',model:'character-robot',gen:'estimate',hp:5,tint:0x66ccff},
- {lesson:'5-3',name:'THE AREA ALIEN',sub:'Area models',model:'character-alien',gen:'model',hp:5,tint:0xb388ff},
- {lesson:'5-4',name:'CHUNK PIRATE',sub:'Partial quotients',model:'character-raider',gen:'partial',hp:5,tint:0xffa94d},
- {lesson:'5-5',name:'CAPTAIN REMAINDER',sub:'3-digit ÷ 2-digit',model:'character-soldier',gen:'algo3',hp:5,tint:0xff6b6b},
- {lesson:'5-6',name:'THE MEGA FOREMAN',sub:'4-digit ÷ 2-digit',model:'character-worker',gen:'algo4',hp:5,tint:0xffd23f},
- {lesson:'5-7',name:'THE SHAPESHIFTER',sub:'Choose a strategy (master this first!)',model:'character-male-e',gen:'mix',hp:6,tint:0xff4dd2},
- {lesson:'5-8',name:'QUEEN OF WORDS',sub:'Word problems & remainders',model:'character-female-d',gen:'word',hp:6,tint:0xff3d3d},
+ {lesson:'5-7',name:'THE SHAPESHIFTER',sub:'Choose a strategy · test level',model:'character-male-e',gen:'hard7',hp:8,tint:0xff4dd2},
+ {lesson:'5-8',name:'QUEEN OF WORDS',sub:'Word problems · test level',model:'character-female-d',gen:'hard8',hp:8,tint:0xff3d3d},
 ];
 
 const ladder=d=>[1,2,3,4,5,6,7,8,9].map(k=>f(k*d)).join(', ');
@@ -244,7 +255,7 @@ function buildSteps(n,d){const ds=String(n).split('').map(Number);let i=0,cur=0;
 const RULES={D:'1 DIVIDE',M:'2 MULTIPLY',S:'3 SUBTRACT',B:'4 BRING DOWN',C:'✓ CHECK'};
 /* ---------- state ---------- */
 const S={lvl:0,hp:0,mins:0,gems:0,streak:0,tries:0,cur:null,done:new Set(),sound:true,busy:false};
-try{const s=JSON.parse(localStorage.getItem('t5g')||'{}');if(s.mins)S.mins=s.mins;if(s.gems)S.gems=s.gems;if(s.done)S.done=new Set(s.done);}catch(e){}
+try{const s=JSON.parse(localStorage.getItem('t5g')||'{}');if(s.mins)S.mins=s.mins;if(s.gems)S.gems=s.gems;}catch(e){}
 const save=()=>{try{localStorage.setItem('t5g',JSON.stringify({mins:S.mins,gems:S.gems,done:[...S.done]}))}catch(e){}};
 const $=id=>document.getElementById(id);
 
@@ -462,10 +473,10 @@ function win(){playClip(bossMix,bossClips,'emote-yes',true);play('win');S.done.a
  setTimeout(()=>{play('loot');const gem=Math.random()<.5;if(gem){S.gems++;S.mins+=2}else S.mins+=1;stats();
   $('chestIcon').textContent=gem?'💎':'🪙';$('chestTitle').textContent=gem?'DIAMOND DROP! +2 min':'Gold coin! +1 min';
   $('chestText').innerHTML=`You unlocked the gate of <b>${BOSSES[S.lvl].name}</b> (lesson ${BOSSES[S.lvl].lesson}).<br>Free time banked: <b style="color:#ffd23f">${S.mins} min</b>`+
-   (S.done.size===8?'<br><br>🏆 ALL 8 GATES UNLOCKED. You are ready for Thursday.':'');
+   (S.done.size===2?'<br><br>🏆 BOTH TEST GATES UNLOCKED. You are ready for Thursday.':'');
   $('chestGo').textContent='NEXT GATE ▶';$('chest').style.display='flex'},1700)}
 $('skipEx').onclick=()=>{if(S.endExplore)S.endExplore()};
-$('chestGo').onclick=()=>{$('chest').style.display='none';const k=ORDER.indexOf(S.lvl);const nx=ORDER.slice(k+1).find(i=>!S.done.has(i));startLevel(nx===undefined?ORDER[(k+1)%8]:nx)};
+$('chestGo').onclick=()=>{$('chest').style.display='none';startLevel(S.lvl===0?1:0)};
 $('go').onclick=submit;
 $('work').onclick=()=>{S.mins++;stats();play('ok');toast('📝 WORK SHOWN +1',800,'#3fdc7a')};
 addEventListener('keydown',e=>{if(!S.play&&(e.key==='w'||e.key==='W')&&document.activeElement.tagName!=='INPUT')$('work').click()});
@@ -478,8 +489,8 @@ addEventListener('keydown',e=>{if(!S.play&&(e.key==='w'||e.key==='W')&&document.
  await Promise.all(BOSSES.map(b=>load('m/'+b.model+'.glb')));
  $('load').textContent='';$('startBtn').disabled=false;$('startBtn').textContent='ENTER THE ARENA ⚔️';
 }catch(e){$('load').textContent='Load error: '+e.message;console.error(e)}})();
-const ORDER=[6,5,4,3,2,1,0,7];
-$('startBtn').onclick=()=>{$('start').style.display='none';const first=ORDER.find(i=>!S.done.has(i));startLevel(first===undefined?6:first)};
+const ORDER=[0,1];
+$('startBtn').onclick=()=>{$('start').style.display='none';const first=ORDER.find(i=>!S.done.has(i));startLevel(first===undefined?0:first)};
 drawMap();stats();
 </script>
 </body>
