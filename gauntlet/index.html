@@ -48,7 +48,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0d0f1a;font-family:"T
 #start .panel{text-align:center;padding:28px 34px;max-width:620px}
 #start h1{font-size:44px;margin:0 0 6px;color:var(--gold);text-shadow:0 4px 0 #000}
 #load{opacity:.8;margin-top:10px}
-@media (max-width:600px){#stats{font-size:14px}#bname{font-size:20px}#inputs input{width:120px;font-size:22px}}
+@media (max-width:600px){#boss{top:150px}#bname{font-size:22px}#inputs input{width:110px!important;font-size:22px!important}#qbox{padding:8px 10px}#q{font-size:30px}#prompt{font-size:13px}.btn{font-size:20px;padding:8px 14px}#map button{font-size:12px;padding:4px 6px}#top{flex-direction:column;align-items:stretch}#stats{justify-content:space-between}#stats{font-size:14px}#bname{font-size:20px}#inputs input{width:120px;font-size:22px}}
 
 html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-spacing:.4px}
 #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
@@ -123,28 +123,28 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const f=n=>n.toLocaleString('en-US');
 const GEN={
  // 5-1 patterns and mental math
- pattern(){const q=R(2,9)*pick([1,10,100]);const d=R(2,9)*10;const n=q*d;
+ pattern(){const q=R(4,9)*pick([10,100,1000]);const d=R(4,9)*10;const n=q*d;
   return {prompt:'Use patterns. Cross out zeros, then use a basic fact.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`Think: ${d} × ? = ${f(n)}\nCross out one zero from each: ${f(n/10)} ÷ ${d/10}`}},
  // 5-2 estimate with compatible numbers
- estimate(){const d0=R(3,9)*10,q0=R(2,9)*pick([1,10]);const C=d0*q0;let n;do{n=C+R(-Math.round(C*.04),Math.round(C*.04));}while(n===C||n<10);
+ estimate(){const d0=R(4,9)*10,q0=R(3,9)*pick([10,100]);const C=d0*q0;let n;do{n=C+R(-Math.round(C*.04),Math.round(C*.04));}while(n===C||n<10);
   let d;do{d=d0+R(-2,2);}while(d===d0);
   return {prompt:'ESTIMATE with friendly (compatible) numbers.',q:`${f(n)} ÷ ${d} ≈ ?`,ans:q0,exact:n/d,rem:null,est:true,
    hint:`Friendly numbers: ${f(n)} is close to ${f(C)}, and ${d} is close to ${d0}.\n${f(C)} ÷ ${d0} = ?`}},
  // 5-3 models (2-digit quotient, area model)
- model(){const d=R(11,19),q=R(12,19);const n=d*q;
+ model(){const d=R(13,29),q=R(14,19);const n=d*q;
   return {prompt:'Use an area model: take 10 groups first, then the rest.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`10 × ${d} = ${d*10}.  ${n} − ${d*10} = ${n-d*10}.\nHow many ${d}s in ${n-d*10}? Add it to 10.`}},
  // 5-4 partial quotients
- partial(){const d=R(12,35),q=R(21,49);const n=d*q;const t=Math.floor(q/10)*10;
+ partial(){const d=R(23,48),q=R(31,89);const n=d*q;const t=Math.floor(q/10)*10;
   return {prompt:'Partial quotients: take a big friendly chunk, subtract, repeat, then add the chunks.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`Try ${t} × ${d} = ${f(t*d)}.  ${f(n)} − ${f(t*d)} = ${f(n-t*d)}.\nHow many ${d}s in ${f(n-t*d)}? Then add.`}},
  // 5-5 standard algorithm, 3-digit by 2-digit, remainders
- algo3(){let d,q,r,n;do{d=R(12,49);q=R(11,39);r=Math.random()<.5?0:R(1,d-1);n=d*q+r;}while(n>999||n<100);
+ algo3(){let d,q,r,n;do{d=R(23,89);q=R(12,39);r=Math.random()<.35?0:R(1,d-1);n=d*q+r;}while(n>999||n<400);
   return {prompt:'Divide. Multiply. Subtract. Bring down. (Remainder can be 0.)',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,
    hint:`Multiples ladder: ${d}, ${d*2}, ${d*3}, ${d*4}, ${d*5} …\nCheck: ${d} × quotient + remainder = ${f(n)}`}},
  // 5-6 4-digit by 2-digit
- algo4(){let d,q,r,n;do{d=R(11,45);q=R(101,299);r=Math.random()<.5?0:R(1,d-1);n=d*q+r;}while(n>9999||n<1000);
+ algo4(){let d,q,r,n;do{d=R(23,89);q=R(104,399);r=Math.random()<.35?0:R(1,d-1);n=d*q+r;}while(n>9999||n<3000);
   return {prompt:'Big one: 4-digit ÷ 2-digit. Estimate first, then divide.',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,
    hint:`Estimate: about ${f(Math.round(n/100)*100)} ÷ ${Math.round(d/10)*10||10}.\nLadder: ${d}, ${d*2}, ${d*3} … ${d*9}`}},
  // 5-7 choose a strategy (mix)
@@ -239,7 +239,7 @@ function burst(pos,color,n=40,speed=5){
   scene.add(m);parts.push({m,v,life:1})}}
 let shake=0;
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;
- const far=w/h<1?11:7.2;cam.position.set(0,3,far);cam.lookAt(0,.5,0);cam.updateProjectionMatrix()}
+ cam.fov=w/h<1?64:42;const far=w/h<1?10:7.2;cam.position.set(0,3,far);cam.lookAt(0,w/h<1?-1.2:.5,0);cam.updateProjectionMatrix()}
 addEventListener('resize',resize);
 const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);const t=clock.elapsedTime;
@@ -247,8 +247,8 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.v.y-=12*dt;p.m.position.addScaledVector(p.v,dt);p.m.rotation.x+=dt*8;p.life-=dt*1.1;p.m.scale.setScalar(Math.max(p.life,0.01));
   if(p.life<=0||p.m.position.y<0){scene.remove(p.m);parts.splice(i,1)}}
  aura.rotation.z=t*.8;aura.material.opacity=.35+.2*Math.sin(t*4);
- const far=innerWidth/innerHeight<1?11:7.2;
- cam.position.x=Math.sin(t*.25)*.5+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(0,.5,0);
+ const por=innerWidth/innerHeight<1;const far=por?10:7.2;
+ cam.position.x=Math.sin(t*.25)*.5+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(0,por?-1.2:.5,0);
  shake*=.88;renderer.render(scene,cam)}
 
 /* ---------- screen fx ---------- */
@@ -299,8 +299,8 @@ function win(){playClip(bossMix,bossClips,'die',true);play('win');S.done.add(S.l
   $('chestIcon').textContent=gem?'💎':'🪙';$('chestTitle').textContent=gem?'DIAMOND DROP! +2 min':'Gold coin! +1 min';
   $('chestText').innerHTML=`You beat <b>${BOSSES[S.lvl].name}</b> (lesson ${BOSSES[S.lvl].lesson}).<br>Free time banked: <b style="color:#ffd23f">${S.mins} min</b>`+
    (S.done.size===8?'<br><br>🏆 ALL 8 BOSSES DOWN. You are ready for Thursday.':'');
-  $('chestGo').textContent=S.lvl<7?'NEXT BOSS ▶':'PLAY AGAIN';$('chest').style.display='flex'},1700)}
-$('chestGo').onclick=()=>{$('chest').style.display='none';startLevel(S.lvl<7?S.lvl+1:0)};
+  $('chestGo').textContent='NEXT BOSS ▶';$('chest').style.display='flex'},1700)}
+$('chestGo').onclick=()=>{$('chest').style.display='none';const k=ORDER.indexOf(S.lvl);const nx=ORDER.slice(k+1).find(i=>!S.done.has(i));startLevel(nx===undefined?ORDER[(k+1)%8]:nx)};
 $('go').onclick=submit;
 $('work').onclick=()=>{S.mins++;stats();play('ok');toast('📝 WORK SHOWN +1',800,'#3fdc7a')};
 addEventListener('keydown',e=>{if((e.key==='w'||e.key==='W')&&document.activeElement.tagName!=='INPUT')$('work').click()});
@@ -313,7 +313,8 @@ addEventListener('keydown',e=>{if((e.key==='w'||e.key==='W')&&document.activeEle
  await Promise.all(BOSSES.map(b=>load('m/'+b.model+'.glb')));
  $('load').textContent='';$('startBtn').disabled=false;$('startBtn').textContent='ENTER THE ARENA ⚔️';
 }catch(e){$('load').textContent='Load error: '+e.message;console.error(e)}})();
-$('startBtn').onclick=()=>{$('start').style.display='none';const first=BOSSES.findIndex((_,i)=>!S.done.has(i));startLevel(first<0?0:first)};
+const ORDER=[5,4,7,6,3,2,1,0];
+$('startBtn').onclick=()=>{$('start').style.display='none';const first=ORDER.find(i=>!S.done.has(i));startLevel(first===undefined?5:first)};
 drawMap();stats();
 </script>
 </body>
