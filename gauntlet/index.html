@@ -134,6 +134,8 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const f=n=>n.toLocaleString('en-US');
+const hardD=(lo,hi)=>{let d;do{d=R(lo,hi)}while(Math.random()<.65&&d%10<6);return d};
+const zeroQ3=()=>{const h=R(1,4),o=R(1,9);return Math.random()<.55?h*100+o:R(101,409)};
 const GEN={
  // 5-1 patterns and mental math
  pattern(){const q=R(4,9)*pick([10,100,1000]);const d=R(4,9)*10;const n=q*d;
@@ -149,27 +151,40 @@ const GEN={
   return {prompt:'Use an area model: take 10 groups first, then the rest.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`10 × ${d} = ${d*10}.  ${n} − ${d*10} = ${n-d*10}.\nHow many ${d}s in ${n-d*10}? Add it to 10.`}},
  // 5-4 partial quotients
- partial(){const d=R(23,48),q=R(31,89);const n=d*q;const t=Math.floor(q/10)*10;
+ partial(){const d=hardD(23,48),q=R(31,89);const n=d*q;const t=Math.floor(q/10)*10;
   return {prompt:'Partial quotients: take a big friendly chunk, subtract, repeat, then add the chunks.',q:`${f(n)} ÷ ${d}`,ans:q,rem:null,
    hint:`Try ${t} × ${d} = ${f(t*d)}.  ${f(n)} − ${f(t*d)} = ${f(n-t*d)}.\nHow many ${d}s in ${f(n-t*d)}? Then add.`}},
  // 5-5 standard algorithm, 3-digit by 2-digit, remainders
- algo3(){let d,q,r,n;do{d=R(23,89);q=R(12,39);r=Math.random()<.35?0:R(1,d-1);n=d*q+r;}while(n>999||n<400);
+ algo3(){let d,q,r,n;do{d=hardD(23,89);q=Math.random()<.3?R(1,3)*10:R(12,39);r=Math.random()<.25?0:R(1,d-1);n=d*q+r;}while(n>999||n<400);
   return {prompt:'Divide. Multiply. Subtract. Bring down. (Remainder can be 0.)',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,
    hint:`Multiples ladder: ${d}, ${d*2}, ${d*3}, ${d*4}, ${d*5} …\nCheck: ${d} × quotient + remainder = ${f(n)}`}},
  // 5-6 4-digit by 2-digit
- algo4(){let d,q,r,n;do{d=R(23,89);q=R(104,399);r=Math.random()<.35?0:R(1,d-1);n=d*q+r;}while(n>9999||n<3000);
+ algo4(){let d,q,r,n;do{d=hardD(23,89);q=zeroQ3();r=Math.random()<.25?0:R(1,d-1);n=d*q+r;}while(n>9999||n<2000);
   return {prompt:'Big one: 4-digit ÷ 2-digit. Estimate first, then divide.',q:`${f(n)} ÷ ${d}`,ans:q,rem:r,n,d,steps:true,
    hint:`Estimate: about ${f(Math.round(n/100)*100)} ÷ ${Math.round(d/10)*10||10}.\nLadder: ${d}, ${d*2}, ${d*3} … ${d*9}`}},
  // 5-7 choose a strategy (mix)
- mix(){const c=GEN[pick(['algo4','algo4','algo3','partial'])]();return c;},
+ mix(){return GEN[pick(['algo4','algo4','algo3','detective','missing','place','detective'])]();},
+ // test traps
+ detective(){let d,q,r,n;do{d=hardD(23,39);q=R(1,2)*100+R(1,9);r=R(1,d-1);n=d*q+r}while(n>9999);
+  const wrong=Number(String(q).replace('0',''));
+  return {prompt:'ERROR DETECTIVE: find the mistake.',q:`Max says ${f(n)} ÷ ${d} = ${wrong} R${r}`,ans:q,rem:null,
+   ph:'correct quotient',hint:`Check Max: ${wrong} × ${d} + ${r} = ${f(wrong*d+r)}, not ${f(n)}.\nRule: if ${d} doesn't fit after you bring down, write 0 in the quotient!`}},
+ missing(){const d=hardD(23,68),q=R(41,189),r=R(1,d-1);
+  return {prompt:'Work BACKWARD.',q:`? ÷ ${d} = ${q} R${r}`,ans:d*q+r,rem:null,ph:'dividend',
+   hint:`Rule: quotient × divisor + remainder = dividend.\n${q} × ${d} + ${r} = ?`}},
+ place(){const d=hardD(23,89);const q=R(12,99)*pick([1,1,10]);const n=d*q+R(0,d-1);const Q=Math.floor(n/d);
+  return {prompt:'Before dividing: how many DIGITS will the quotient have?',q:`${f(n)} ÷ ${d}`,ans:String(Q).length,rem:null,ph:'digits',
+   hint:`${d} × 10 = ${f(d*10)}   ${d} × 100 = ${f(d*100)}   ${d} × 1,000 = ${f(d*1000)}\nWhich two is ${f(n)} between?`}},
  // 5-8 word problems, interpret the remainder
- word(){const t=pick([0,1,2,3,4,5]);
+ word(){const t=pick([0,1,2,3,4,5,6,7]);
+  if(t===6){const per=hardD(23,48),n=per*R(20,80)+R(1,per-1);const full=Math.floor(n/per);return {prompt:'2-step word problem.',q:`${f(n)} pencils go in boxes of ${per}. Full boxes sell for $3 each. How many dollars for all the FULL boxes?`,ans:full*3,rem:null,word:true,hint:`Step 1: ${f(n)} ÷ ${per} = ${full} R${n%per} (only full boxes).\nStep 2: ${full} × $3.`}}
+  if(t===7){const per=hardD(24,36),k=R(30,90),extra=R(1,per-1),n=per*k+extra;return {prompt:'2-step word problem.',q:`${f(n)} fans need seats. Each row has ${per} seats. Every row is filled except the last. How many fans are in the LAST row?`,ans:extra,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${k} R${extra}. The last row holds the remainder.`}}
   if(t===0){const per=R(24,52),n=per*R(4,9)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`${n} students go on a trip. Each bus holds ${per}. How many buses are needed?`,ans:a,rem:null,word:true,hint:`${n} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The leftover students still need a seat!`}}
   if(t===1){const per=R(12,36),n=per*R(12,30)+R(1,per-1);return {prompt:'Word problem: what does the remainder MEAN?',q:`${f(n)} stickers go into packs of ${per}. How many FULL packs?`,ans:Math.floor(n/per),rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Only full packs count.`}}
   if(t===2){const per=R(12,36),n=per*R(12,30)+R(1,per-1);return {prompt:'Word problem: what does the remainder MEAN?',q:`${f(n)} cards are shared by ${per} players equally. How many cards are LEFT OVER?`,ans:n%per,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. The answer is the remainder.`}}
   if(t===3){const per=R(15,40),n=per*R(5,25);return {prompt:'Word problem.',q:`A Minecraft farm makes ${f(n)} wheat in ${per} days, the same each day. How much wheat per day?`,ans:n/per,rem:null,word:true,hint:`${f(n)} ÷ ${per}. Estimate first: about ${f(Math.round(n/10)*10)} ÷ ${Math.round(per/10)*10}.`}}
-  if(t===4){const w=R(12,35),l=R(15,45);const a=w*l;return {prompt:'Word problem (area).',q:`A rectangle garden has an area of ${f(a)} square feet. It is ${w} feet wide. How long is it?`,ans:l,rem:null,word:true,hint:`Area = length × width, so length = ${f(a)} ÷ ${w}.`}}
-  const per=R(11,24),n=per*R(20,60)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`You need to store ${f(n)} blocks. One chest holds ${per} stacks' worth (${per} blocks here). How many chests do you need for ALL of them?`,ans:a,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Leftover blocks need one more chest.`}}
+  if(t===4){const w=hardD(23,48),l=R(15,45);const a=w*l;return {prompt:'Word problem (area).',q:`A rectangle garden has an area of ${f(a)} square feet. It is ${w} feet wide. How long is it?`,ans:l,rem:null,word:true,hint:`Area = length × width, so length = ${f(a)} ÷ ${w}.`}}
+  const per=hardD(23,48),n=per*R(20,60)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`You need to store ${f(n)} blocks. One chest holds ${per} blocks. How many chests do you need for ALL of them?`,ans:a,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Leftover blocks need one more chest.`}}
 };
 const BOSSES=[
  {lesson:'5-1',name:'THE ZERO TROLL',sub:'Patterns & mental math',model:'character-zombie',gen:'pattern',hp:5,tint:0x66ff88},
@@ -296,7 +311,7 @@ function newQ(){S.cur=GEN[BOSSES[S.lvl].gen]();S.tries=0;const c=S.cur;$('prompt
  const box=$('inputs');box.innerHTML='';$('rules').style.display='none';$('board').style.display='none';
  if(c.steps){S.st=buildSteps(c.n,c.d);S.si=0;S.qs='';S.stTries=0;$('prompt').textContent='Long division, one move at a time. Does McDonald\'s Sell Nuggets? Then CHECK!';renderStep();return}
  const mk=(id,ph)=>{const i=document.createElement('input');i.id=id;i.placeholder=ph;i.inputMode='numeric';i.autocomplete='off';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(id==='a'&&$('r')&&!$('r').value&&$('a').value)$('r').focus();else submit()}};return i};
- if(c.rem!==null){box.append(lbl('Q'),mk('a','quotient'),lbl('R'),mk('r','remainder'))}else box.append(mk('a',c.est?'estimate':'answer'));
+ if(c.rem!==null){box.append(lbl('Q'),mk('a','quotient'),lbl('R'),mk('r','remainder'))}else box.append(mk('a',c.ph||(c.est?'estimate':'answer')));
  setTimeout(()=>$('a').focus(),50)}
 function renderStep(){const st=S.st[S.si];const r=$('rules');r.style.display='flex';
  r.innerHTML=['D','M','S','B','C'].map(k=>`<span class="${k===st.k?'on':''}">${RULES[k]}</span>`).join('');
