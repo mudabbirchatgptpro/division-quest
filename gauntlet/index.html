@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Topic 5 Gauntlet</title>
+<title>Topic 5 Gate Quest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#ffd23f;--red:#ff4d5a;--ink:#0d0f1a}
@@ -23,7 +23,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0d0f1a;font-family:"T
 #bname{font-size:26px;font-weight:900;text-shadow:0 3px 0 #000;letter-spacing:.5px}
 #bsub{font-size:14px;opacity:.85;margin-bottom:4px}
 #hpbar{height:20px;border-radius:10px;background:#2a0d12;border:2px solid #000;overflow:hidden}
-#hp{height:100%;width:100%;background:linear-gradient(90deg,#ff2e4d,#ff8a3d);transition:width .35s}
+#hp{height:100%;width:0%;background:linear-gradient(90deg,#ff2e4d,#ff8a3d);transition:width .35s}
 #bottom{bottom:14px;display:flex;justify-content:center;padding:0 12px}
 #qbox{width:min(760px,96vw);text-align:center;pointer-events:auto}
 #prompt{font-size:16px;opacity:.9;margin-bottom:4px}
@@ -58,12 +58,12 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
 #map button.done{background:linear-gradient(180deg,#4bd06b,#1d7a37);border-color:#b6ffc8}
 #stats{font-weight:400;font-size:20px}
 #boss{top:70px}
-#bname{font-size:38px;font-weight:400;color:#fff;text-shadow:0 4px 0 #000,0 0 18px rgba(255,80,80,.7);-webkit-text-stroke:1px #000}
+#bname{font-size:38px;font-weight:400;color:#fff;text-shadow:0 4px 0 #000,0 0 18px rgba(80,200,255,.7);-webkit-text-stroke:1px #000}
 #bname{line-height:1.1;margin-bottom:4px}
 #bsub{font-size:16px;color:#ffe2a8;text-shadow:0 2px 0 #000;margin-bottom:6px}
 #hint{min-height:0}#hint:empty{display:none}
-#hpbar{height:26px;border:3px solid #000;box-shadow:0 0 0 2px #c9932e;border-radius:14px;background:#3a0b10}
-#hp{background:linear-gradient(180deg,#ff6b6b,#d1102e 60%,#8a0018);box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
+#hpbar{height:26px;border:3px solid #000;box-shadow:0 0 0 2px #c9932e;border-radius:14px;background:#0b1a2a}
+#hp{background:linear-gradient(180deg,#9ff3ff,#22b8ff 60%,#0a5fb0);box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
 #qbox{width:min(640px,94vw);padding:10px 16px 12px}
 #prompt{font-size:15px;color:#ffe2a8;opacity:1}
 #q{font-size:clamp(30px,5vw,50px);font-weight:400;color:#fff;-webkit-text-stroke:1px #000;text-shadow:0 4px 0 #000;margin:0 0 8px}
@@ -84,6 +84,12 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
 #rules span.ok{background:#1d7a37;border-color:#4bd06b;color:#fff}
 #board{display:none;font-size:18px;color:#ffe27a;margin-bottom:6px;text-shadow:0 2px 0 #000;white-space:pre-line}
 #stepAsk{font-size:22px;color:#fff;margin:4px 0 8px;text-shadow:0 2px 0 #000}
+@media (min-width:901px){
+ #bottom{top:120px;bottom:auto;right:18px;left:auto;justify-content:flex-end}
+ #qbox{width:420px}
+ #boss{left:calc(50% - 220px)}
+}
+@media (max-width:900px){#qbox{max-height:48vh;overflow:auto}}
 </style>
 </head>
 <body>
@@ -104,16 +110,16 @@ html,body{font-family:"Lilita One","Trebuchet MS",system-ui,sans-serif;letter-sp
   <div id="rules"></div><div id="board"></div>
   <div id="inputs"></div>
   <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-    <button class="btn" id="go">ATTACK ⚔️</button>
+    <button class="btn" id="go">POWER UP ⚡</button>
     <button class="btn sm" id="work" title="Tutor: press when he shows his work on paper (W)">📝 Work shown +1</button>
   </div>
   <div id="hint"></div>
 </div></div>
 <div id="toast"></div>
-<div id="chest"><div class="panel"><div id="chestIcon" style="font-size:80px">🧰</div><h2 id="chestTitle"></h2><div id="chestText" style="font-size:20px"></div><br><button class="btn" id="chestGo">NEXT BOSS ▶</button></div></div>
+<div id="chest"><div class="panel"><div id="chestIcon" style="font-size:80px">🧰</div><h2 id="chestTitle"></h2><div id="chestText" style="font-size:20px"></div><br><button class="btn" id="chestGo">NEXT GATE ▶</button></div></div>
 <div id="start"><div class="panel">
-  <h1>TOPIC 5 GAUNTLET</h1>
-  <div style="font-size:19px;line-height:1.5">8 bosses. One for each lesson on Thursday's test.<br>Every hit = a right answer. Every right answer = <b style="color:#ffd23f">+1 free minute</b>.<br>3 in a row = <b style="color:#ffd23f">CRITICAL HIT</b>. Beat a boss = loot chest.</div><br>
+  <h1>TOPIC 5 GATE QUEST</h1>
+  <div style="font-size:19px;line-height:1.5">8 magic gates. One for each lesson on Thursday's test.<br>Every right answer charges the gate. Every right answer = <b style="color:#ffd23f">+1 free minute</b>.<br>3 in a row = <b style="color:#ffd23f">SUPER CHARGE</b>. Unlock a gate = loot chest.</div><br>
   <button class="btn" id="startBtn" disabled>LOADING…</button>
   <div id="load"></div>
 </div></div>
@@ -166,11 +172,11 @@ const GEN={
   const per=R(11,24),n=per*R(20,60)+R(1,per-1);const a=Math.ceil(n/per);return {prompt:'Word problem: what does the remainder MEAN?',q:`You need to store ${f(n)} blocks. One chest holds ${per} stacks' worth (${per} blocks here). How many chests do you need for ALL of them?`,ans:a,rem:null,word:true,hint:`${f(n)} ÷ ${per} = ${Math.floor(n/per)} R${n%per}. Leftover blocks need one more chest.`}}
 };
 const BOSSES=[
- {lesson:'5-1',name:'ZERO ZOMBIE',sub:'Patterns & mental math',model:'character-zombie',gen:'pattern',hp:5,tint:0x66ff88},
+ {lesson:'5-1',name:'THE ZERO TROLL',sub:'Patterns & mental math',model:'character-zombie',gen:'pattern',hp:5,tint:0x66ff88},
  {lesson:'5-2',name:'ROUGHBOT 9000',sub:'Estimate with compatible numbers',model:'character-robot',gen:'estimate',hp:5,tint:0x66ccff},
  {lesson:'5-3',name:'THE AREA ALIEN',sub:'Area models',model:'character-alien',gen:'model',hp:5,tint:0xb388ff},
- {lesson:'5-4',name:'CHUNK RAIDER',sub:'Partial quotients',model:'character-raider',gen:'partial',hp:5,tint:0xffa94d},
- {lesson:'5-5',name:'SERGEANT REMAINDER',sub:'3-digit ÷ 2-digit',model:'character-soldier',gen:'algo3',hp:5,tint:0xff6b6b},
+ {lesson:'5-4',name:'CHUNK PIRATE',sub:'Partial quotients',model:'character-raider',gen:'partial',hp:5,tint:0xffa94d},
+ {lesson:'5-5',name:'CAPTAIN REMAINDER',sub:'3-digit ÷ 2-digit',model:'character-soldier',gen:'algo3',hp:5,tint:0xff6b6b},
  {lesson:'5-6',name:'THE MEGA FOREMAN',sub:'4-digit ÷ 2-digit',model:'character-worker',gen:'algo4',hp:5,tint:0xffd23f},
  {lesson:'5-7',name:'THE SHAPESHIFTER',sub:'Choose a strategy (master this first!)',model:'character-male-e',gen:'mix',hp:6,tint:0xff4dd2},
  {lesson:'5-8',name:'QUEEN OF WORDS',sub:'Word problems & remainders',model:'character-female-d',gen:'word',hp:6,tint:0xff3d3d},
@@ -260,7 +266,7 @@ function burst(pos,color,n=40,speed=5){
   scene.add(m);parts.push({m,v,life:1})}}
 let shake=0;
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;
- cam.fov=w/h<1?64:42;const far=w/h<1?10:7.2;cam.position.set(0,3,far);cam.lookAt(0,w/h<1?-1.2:.5,0);cam.updateProjectionMatrix()}
+ cam.fov=w/h<1?64:42;const far=w/h<1?10:7.2;const ox=w>900?2.1:0;cam.position.set(ox,3,far);cam.lookAt(ox,w/h<1?-1.6:.3,0);cam.updateProjectionMatrix()}
 addEventListener('resize',resize);
 const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);const t=clock.elapsedTime;
@@ -268,8 +274,8 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.v.y-=12*dt;p.m.position.addScaledVector(p.v,dt);p.m.rotation.x+=dt*8;p.life-=dt*1.1;p.m.scale.setScalar(Math.max(p.life,0.01));
   if(p.life<=0||p.m.position.y<0){scene.remove(p.m);parts.splice(i,1)}}
  aura.rotation.z=t*.8;aura.material.opacity=.35+.2*Math.sin(t*4);
- const por=innerWidth/innerHeight<1;const far=por?10:7.2;
- cam.position.x=Math.sin(t*.25)*.5+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(0,por?-1.2:.5,0);
+ const por=innerWidth/innerHeight<1;const far=por?10:7.2;const ox=innerWidth>900?2.1:0;
+ cam.position.x=ox+Math.sin(t*.25)*.4+(Math.random()-.5)*shake;cam.position.y=3+(Math.random()-.5)*shake;cam.position.z=far;cam.lookAt(ox,por?-1.6:.3,0);
  shake*=.88;renderer.render(scene,cam)}
 
 /* ---------- screen fx ---------- */
@@ -299,43 +305,43 @@ function renderStep(){const st=S.st[S.si];const r=$('rules');r.style.display='fl
  const i=document.createElement('input');i.id='a';i.inputMode='numeric';i.autocomplete='off';i.placeholder='?';i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit()}};
  box.style.flexDirection='column';box.append(ask,i);$('hint').textContent='';setTimeout(()=>i.focus(),30)}
 function stepSubmit(){const st=S.st[S.si];const v=num($('a').value);if(isNaN(v))return;
- if(v===st.ans){S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);play('ok');playClip(heroMix,heroClips,'attack-melee-right',true);
+ if(v===st.ans){S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);play('ok');playClip(heroMix,heroClips,'interact-right',true);
   const p=boss.position.clone();p.y+=1.4;burst(p,0xffffff,12,3);shake=.08;
   S.si++;if(S.si>=S.st.length){$('inputs').style.flexDirection='';$('hint').textContent='';hit();return}
   if(S.st[S.si].k==='C')toast('CHECK IT!',700,'#3fdc7a');renderStep()}
- else{S.stTries++;S.streak=0;stats();play('wrong');playClip(bossMix,bossClips,'attack-melee-right',true);knock(hero,-.4);
-  if(S.stTries===1){$('hint').textContent='Blocked! '+st.hint;$('a').value='';$('a').focus()}
+ else{S.stTries++;S.streak=0;stats();play('wrong');playClip(bossMix,bossClips,'emote-no',true);
+  if(S.stTries===1){$('hint').textContent='Not yet! '+st.hint;$('a').value='';$('a').focus()}
   else{$('hint').textContent=`It's ${f(st.ans)}. ${st.hint}`;S.busy=true;setTimeout(()=>{S.busy=false;S.stTries=0;if(st.k==='D')S.qs+=String(st.qd);S.si++;if(S.si>=S.st.length){$('inputs').style.flexDirection='';newQ()}else renderStep()},2600)}}}
 const lbl=t=>{const l=document.createElement('label');l.textContent=t;return l};
 const num=v=>v===''?NaN:Number(String(v).replace(/[, ]/g,''));
 async function startLevel(i){S.lvl=i;S.hp=BOSSES[i].hp;S.busy=true;const b=BOSSES[i];
- $('bname').textContent=`${b.lesson} · ${b.name}`;$('bsub').textContent=b.sub;$('hp').style.width='100%';drawMap();
+ $('bname').textContent=`${b.lesson} · ${b.name}`;$('bsub').textContent=b.sub;$('hp').style.width='0%';drawMap();
  await setBoss(i);S.busy=false;toast(b.name+'!',1200,'#'+b.tint.toString(16).padStart(6,'0'));newQ()}
 function submit(){if(S.busy||!S.cur)return;const c=S.cur;if(c.steps)return stepSubmit();const a=num($('a').value);const r=$('r')?num($('r').value||'0'):null;
  if(isNaN(a)){$('a').focus();return}
  let ok;if(c.est){ok=Math.abs(a-c.ans)<=Math.max(1,c.ans*.15)||Math.abs(a-c.exact)<=Math.max(1,c.exact*.15)}else ok=a===c.ans&&(c.rem===null||r===c.rem);
  if(ok)hit();else miss()}
 function hit(){S.busy=true;S.streak++;const crit=S.streak>=3&&S.streak%3===0;S.mins++;stats();
- playClip(heroMix,heroClips,'attack-melee-right',true);lunge();
- setTimeout(()=>{const dmg=crit?2:1;S.hp=Math.max(0,S.hp-dmg);$('hp').style.width=(S.hp/BOSSES[S.lvl].hp*100)+'%';
-  play(crit?'crit':'hit');flash(crit?'#ffd23f':'#fff');shake=crit?.6:.25;knock(boss,.7);
+ playClip(heroMix,heroClips,'interact-right',true);
+ setTimeout(()=>{const dmg=crit?2:1;S.hp=Math.max(0,S.hp-dmg);$('hp').style.width=((1-S.hp/BOSSES[S.lvl].hp)*100)+'%';
+  play(crit?'loot':'ok');flash(crit?'#ffd23f':'#fff');shake=crit?.6:.25;
   const p=boss.position.clone();p.y+=1.4;burst(p,crit?0xffd23f:BOSSES[S.lvl].tint,crit?70:35,crit?8:5);
-  dmgNum(crit?'CRIT! -2':'-1',crit);if(crit)toast('CRITICAL HIT!',900);
+  dmgNum(crit?'⚡⚡ +2':'⚡ +1',crit);if(crit)toast('SUPER CHARGE!',900);
   if(S.cur.est)$('hint').textContent=`Nice estimate! Friendly-number answer: ${S.cur.ans}.`;
   setTimeout(()=>{if(S.hp<=0)win();else{S.busy=false;newQ()}},S.cur.est?900:550)},280)}
 function miss(){S.tries++;S.streak=0;stats();play('wrong');
- playClip(bossMix,bossClips,'attack-melee-right',true);knock(hero,-.5);shake=.2;
+ playClip(bossMix,bossClips,'emote-no',true);
  const c=S.cur;
- if(S.tries===1){$('hint').textContent='Blocked! Hint:\n'+c.hint;toast('BLOCKED!',700,'#ff4d5a')}
+ if(S.tries===1){$('hint').textContent='Not yet! Hint:\n'+c.hint;toast('NOT YET!',700,'#ffb03a')}
  else{$('hint').textContent=`Answer: ${f(c.ans)}${c.rem!==null?' R'+c.rem:''}.\n${c.hint}\nNew problem coming…`;S.busy=true;setTimeout(()=>{S.busy=false;newQ()},3200)}
  ['a','r'].forEach(id=>{if($(id))$(id).value=''});if($('a'))$('a').focus()}
-function win(){playClip(bossMix,bossClips,'die',true);play('win');S.done.add(S.lvl);drawMap();
- const p=boss.position.clone();p.y+=1;burst(p,0xffd23f,120,9);shake=.8;toast('BOSS DEFEATED!',1500);
+function win(){playClip(bossMix,bossClips,'emote-yes',true);play('win');S.done.add(S.lvl);drawMap();
+ const p=boss.position.clone();p.y+=1;burst(p,0xffd23f,120,9);shake=.8;toast('GATE UNLOCKED!',1500);
  setTimeout(()=>{play('loot');const gem=Math.random()<.5;if(gem){S.gems++;S.mins+=2}else S.mins+=1;stats();
   $('chestIcon').textContent=gem?'💎':'🪙';$('chestTitle').textContent=gem?'DIAMOND DROP! +2 min':'Gold coin! +1 min';
-  $('chestText').innerHTML=`You beat <b>${BOSSES[S.lvl].name}</b> (lesson ${BOSSES[S.lvl].lesson}).<br>Free time banked: <b style="color:#ffd23f">${S.mins} min</b>`+
-   (S.done.size===8?'<br><br>🏆 ALL 8 BOSSES DOWN. You are ready for Thursday.':'');
-  $('chestGo').textContent='NEXT BOSS ▶';$('chest').style.display='flex'},1700)}
+  $('chestText').innerHTML=`You unlocked the gate of <b>${BOSSES[S.lvl].name}</b> (lesson ${BOSSES[S.lvl].lesson}).<br>Free time banked: <b style="color:#ffd23f">${S.mins} min</b>`+
+   (S.done.size===8?'<br><br>🏆 ALL 8 GATES UNLOCKED. You are ready for Thursday.':'');
+  $('chestGo').textContent='NEXT GATE ▶';$('chest').style.display='flex'},1700)}
 $('chestGo').onclick=()=>{$('chest').style.display='none';const k=ORDER.indexOf(S.lvl);const nx=ORDER.slice(k+1).find(i=>!S.done.has(i));startLevel(nx===undefined?ORDER[(k+1)%8]:nx)};
 $('go').onclick=submit;
 $('work').onclick=()=>{S.mins++;stats();play('ok');toast('📝 WORK SHOWN +1',800,'#3fdc7a')};
